@@ -1,7 +1,7 @@
 import "./Footer.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import wave2 from "../../assets/wave2.png";
-import demoLogo from "../../assets/demo-logo.png";
+import wave2 from "../../../assets/wave2.png";
+import demoLogo from "../../../assets/demo-logo.png";
 
 const Footer = () => {
   return (

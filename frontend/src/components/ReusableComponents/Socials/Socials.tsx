@@ -1,10 +1,10 @@
 import "./Socials.css";
-import facebookIcon from "../../assets/facebook-icon.png";
-import instagramIcon from "../../assets/instagram-icon.png";
-import twitterIcon from "../../assets/twitter-icon.png";
-import whatsappIcon from "../../assets/whatsapp-icon.png";
-import linkedinIcon from "../../assets/linkedin-icon.png";
-import SnapchatIcon from "../../assets/facebook-icon.png";
+import facebookIcon from "../../../assets/facebook-icon.png";
+import instagramIcon from "../../../assets/instagram-icon.png";
+import twitterIcon from "../../../assets/twitter-icon.png";
+import whatsappIcon from "../../../assets/whatsapp-icon.png";
+import linkedinIcon from "../../../assets/linkedin-icon.png";
+import SnapchatIcon from "../../../assets/facebook-icon.png";
 
 const Socials = () => {
   return (

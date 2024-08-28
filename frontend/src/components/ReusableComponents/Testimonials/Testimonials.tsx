@@ -1,6 +1,6 @@
 import "./Testimonials.css";
-import user1 from "../../assets/user1.jpg";
-import user2 from "../../assets/user2.jpg";
+import user1 from "../../../assets/user1.jpg";
+import user2 from "../../../assets/user2.jpg";
 
 const Testimonials = () => {
   return (

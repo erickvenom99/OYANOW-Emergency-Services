@@ -1,7 +1,7 @@
 import "./banner.css";
-import play from "../../assets/play.png";
-import home2 from "../../assets/home2.png";
-import wave1 from "../../assets/wave1.png";
+import play from "../../../assets/play.png";
+import home2 from "../../../assets/home2.png";
+import wave1 from "../../../assets/wave1.png";
 
 const Banner = () => {
   return (
