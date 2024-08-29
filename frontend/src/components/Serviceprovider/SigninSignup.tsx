@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Navbar from "../ReusableComponents/Navbar/Navbar";
 import "./SigninSignup.css";
+import Navbar from "../ReusableComponents/Navbar/Navbar";
 import email from "../../assets/email.png";
 import password from "../../assets/password.png";
 import person from "../../assets/person.png";
@@ -11,7 +11,7 @@ const SigninSignup = () => {
     <>
       <Navbar />
       <div className="signin-signup-background">
-        <div className="container">
+        <div className="signin-container">
           <div className="header">
             <div className="text">{action}</div>
             <div className="underline"></div>
