@@ -4,14 +4,7 @@ import React, { useState } from "react";
 import "./SignUp.css";
 
 const SignUp = () => {
-  const navItems = [
-    { id: "1", title: "Home", url: "/" },
-    { id: "2", title: "Electrical", url: "/features" },
-    { id: "3", title: "Mechanical", url: "/pricing" },
-    { id: "4", title: "Plumbering", url: "/testimonial" },
-    { id: "5", title: "Pricing", url: "/pricing" },
-    { id: "6", title: "Sign-in", url: "/sign-up" },
-  ];
+
   const [name, setName] = useState("");
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value);
