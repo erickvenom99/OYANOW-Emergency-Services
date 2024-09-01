@@ -55,13 +55,13 @@ const Navbar = () => {
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/Serviceproviders">
+                <a className="nav-link" href="/service-providers/login">
                   Service Provider
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/signin">
-                  Sign-in
+                <a className="nav-link" href="/login">
+                  Login
                 </a>
               </li>
               <li className="nav-item">

@@ -1,135 +1,97 @@
-import Navbar from "../ReusableComponents/Navbar/Navbar";
-import Footer from "../ReusableComponents/Footer/Footer";
-import React, { useState } from "react";
+import { useState } from "react";
+import email from "../../assets/email.png";
+import password from "../../assets/password.png";
+import person from "../../assets/person.png";
+import axios from "axios";
 import "./SignUp.css";
 
 const SignUp = () => {
-
+  const [action, setAction] = useState("Login");
   const [name, setName] = useState("");
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setName(event.target.value);
-  };
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const [emailValue, setEmailValue] = useState("");
+  const [passwordValue, setPasswordValue] = useState("");
+
+  const handleSubmit = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/sign-up", {
+        name,
+        email: emailValue,
+        password: passwordValue,
+      });
+      console.log("User created: ", response.data);
+    } catch (error) {
+      console.error("Error creating user:", error);
+    }
   };
 
   return (
     <>
-      <Navbar navItems={navItems} />
-
-      {/* Form Element */}
-      <form className="row g-3">
-        <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-md-6">
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label htmlFor="name" className="form-label">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={name}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label htmlFor="username" className="form-label">
-                    Username
-                  </label>
-                  <input type="text" className="form-control" />
-                </div>
-              </div>
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label htmlFor="inputEmail4" className="form-label">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    id="inputEmail4"
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label htmlFor="inputPassword4" className="form-label">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    id="inputPassword4"
-                  />
-                </div>
-              </div>
-              <div className="col-12">
-                <label htmlFor="inputAddress" className="form-label">
-                  Address
-                </label>
+      <div className="signin-signup-background">
+        <div className="signin-container">
+          <div className="header">
+            <div className="text">{action}</div>
+            <div className="underline"></div>
+          </div>
+          <div className="inputs">
+            {action === "Login" ? (
+              <div></div>
+            ) : (
+              <div className="input">
+                <img src={person} alt="" />
                 <input
                   type="text"
-                  className="form-control"
-                  id="inputAddress"
-                  placeholder="1234 Main St"
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </div>
-              <div className="col-12">
-                <label htmlFor="inputAddress2" className="form-label">
-                  Address 2
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="inputAddress2"
-                  placeholder="Apartment, studio, or floor"
-                />
-              </div>
-              <div className="col-md-6">
-                <label htmlFor="inputCity" className="form-label">
-                  City
-                </label>
-                <input type="text" className="form-control" id="inputCity" />
-              </div>
-              <div className="col-md-4">
-                <label htmlFor="inputState" className="form-label">
-                  State
-                </label>
-                <select id="inputState" className="form-select">
-                  <option selected>Choose...</option>
-                  <option>...</option>
-                </select>
-              </div>
-              <div className="col-md-2">
-                <label htmlFor="inputZip" className="form-label">
-                  Zip
-                </label>
-                <input type="text" className="form-control" id="inputZip" />
-              </div>
-              <div className="col-12">
-                <div className="form-check">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id="gridCheck"
-                  />
-                  <label className="form-check-label" htmlFor="gridCheck">
-                    Check me out
-                  </label>
-                </div>
-              </div>
-              <div className="col-12">
-                <button type="submit" className="btn btn-primary">
-                  Sign in
-                </button>
-              </div>
+            )}
+            <div className="input">
+              <img src={email} alt="" />
+              <input
+                type="email"
+                placeholder="Email"
+                value={emailValue}
+                onChange={(e) => setEmailValue(e.target.value)}
+              />
+            </div>
+            <div className="input">
+              <img src={password} alt="" />
+              <input
+                type="password"
+                placeholder="password"
+                value={passwordValue}
+                onChange={(e) => setPasswordValue(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="submit submit-button" onClick={handleSubmit}>
+            Submit
+          </div>
+          {action === "Sign Up" ? (
+            <div></div>
+          ) : (
+            <div className="forgot-password">
+              Lost password? <span>Click Here!</span>
+            </div>
+          )}
+          <div className="submit-container">
+            <div
+              className={action === "Login" ? "submit gray" : "submit"}
+              onClick={() => setAction("Sign Up")}
+            >
+              {"Sign Up"}
+            </div>
+            <div
+              className={action === "Sign Up" ? "submit gray" : "submit"}
+              onClick={() => setAction("Login")}
+            >
+              {"Login"}
             </div>
           </div>
         </div>
-      </form>
-      <Footer />
+      </div>
     </>
   );
 };
-
 export default SignUp;
