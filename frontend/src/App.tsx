@@ -5,6 +5,7 @@ import SignUp from "./components/SignUp/SignUp";
 import SigninSignup from "./components/Serviceprovider/SigninSignup";
 import Footer from "./components/ReusableComponents/Footer/Footer";
 import Navbar from "./components/ReusableComponents/Navbar/Navbar";
+import Dashboard from "./components/Dashboard/Dashboard";
 
 const App = () => {
   return (
@@ -16,6 +17,7 @@ const App = () => {
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/service-providers/login" element={<SigninSignup />} />
           <Route path="/service-providers/sign-up" element={<SigninSignup />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </div>
       <Footer />
