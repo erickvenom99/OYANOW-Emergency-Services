@@ -25,9 +25,27 @@ const SigninSignup = () => {
           password: passwordValue,
         }
       );
-      console.log("User created: ", response.data);
-      // Optionally navigate after successful submission
-      navigate("/dashboard"); // Change to your desired route
+      const username = response.data.username;
+      let successMessage = "";
+      if (action === "Sign Up") {
+        if (response.status === 201) {
+          successMessage = "New User Created";
+        } else {
+          console.log(
+            "Failed to create user. Please fill in the required information"
+          );
+          return;
+        }
+      } else {
+        if (response.status == 200) {
+          successMessage = "Login Successful";
+        } else {
+          console.log("Incorrect Login details. Please try again.");
+          return;
+        }
+      }
+      const destinationPath = `/${username}/dashboard`;
+      navigate(destinationPath); // Logs in to the User's dashboard
     } catch (error) {
       console.error("Error creating user:", error);
     }
