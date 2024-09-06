@@ -1,19 +1,31 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import email from "../../assets/email.png";
-import password from "../../assets/password.png";
-import person from "../../assets/person.png";
 import axios from "axios";
+import SignUpForm from "./SignUpForm";
+import LoginForm from "./LoginForm";
 import "./SigninSignup.css";
 
-const SigninSignup = () => {
-  const [action, setAction] = useState("Login");
-  const [name, setName] = useState("");
-  const [emailValue, setEmailValue] = useState("");
-  const [passwordValue, setPasswordValue] = useState("");
+const SigninSignup: React.FC = () => {
+  const [action, setAction] = useState<"Login" | "Sign Up">("Login");
+  const [name, setName] = useState<string>("");
+  const [usernameValue, setUsernameValue] = useState<string>("");
+  const [passwordValue, setPasswordValue] = useState<string>("");
+  const [confirmPasswordValue, setConfirmPasswordValue] = useState<string>("");
+  const [addressValue, setAddressValue] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [cityValue, setCityValue] = useState<string>("");
+  const [stateValue, setStateValue] = useState<string>("");
+  const [zipCodeValue, setZipCodeValue] = useState<string>("");
+  const [emailValue, setEmailValue] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
+    setErrorMessage("");
+    if (action === "Sign Up" && passwordValue !== confirmPasswordValue) {
+      setErrorMessage("Error: Passwords do not match");
+      return; // Prevent further execution
+    }
     try {
       const response = await axios.post(
         action === "Sign Up"
@@ -21,95 +33,143 @@ const SigninSignup = () => {
           : "http://localhost:5000/service-providers/login",
         {
           name,
+          username: usernameValue,
           email: emailValue,
           password: passwordValue,
+          phoneNumber: phoneNumber,
+          address: addressValue,
+          city: cityValue,
+          state: stateValue,
+          zipcode: zipCodeValue,
         }
       );
+
       const username = response.data.username;
       let successMessage = "";
       if (action === "Sign Up") {
         if (response.status === 201) {
-          successMessage = "New User Created";
+          successMessage = "Account Created";
         } else {
-          console.log(
+          setErrorMessage(
             "Failed to create user. Please fill in the required information"
           );
+          console.log(errorMessage);
           return;
         }
       } else {
-        if (response.status == 200) {
+        if (response.status === 200) {
           successMessage = "Login Successful";
         } else {
-          console.log("Incorrect Login details. Please try again.");
+          setErrorMessage("Incorrect Login details. Please try again.");
+          console.log(errorMessage);
           return;
         }
       }
       const destinationPath = `/${username}/dashboard`;
-      navigate(destinationPath); // Logs in to the User's dashboard
+      navigate(destinationPath);
     } catch (error) {
       console.error("Error creating user:", error);
+      setErrorMessage("An error occurred. Please try again");
     }
   };
 
   const handleToggleAction = () => {
-    setAction((prev) => (prev === "Login" ? "Sign Up" : "Login"));
-    navigate(
-      action === "Login"
-        ? "/service-providers/sign-up"
-        : "/service-providers/login"
-    );
+    // Determine the next action
+    const nextAction = action === "Login" ? "Sign Up" : "Login";
+    setAction(nextAction);
+
+    // Clear form fields when toggling
+    if (nextAction === "Sign Up") {
+      navigate("/service-providers/sign-up");
+      setEmailValue("");
+      setPasswordValue("");
+    } else {
+      navigate("/service-providers/login");
+      setName("");
+      setUsernameValue("");
+      setAddressValue("");
+      setPasswordValue("");
+      setConfirmPasswordValue("");
+      setPhoneNumber("");
+      setCityValue("");
+      setStateValue("");
+      setZipCodeValue("");
+    }
   };
 
   return (
-    <>
-      <div className="signin-signup-background">
-        <div className="signin-container">
-          <div className="header">
-            <div className="text">{action}</div>
-            <div className="underline"></div>
-          </div>
-          <div className="inputs">
-            {action === "Sign Up" && (
-              <div className="input">
-                <img src={person} alt="" />
-                <input
-                  type="text"
-                  placeholder="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+    <div className="signin-signup-background">
+      <div className="signin-container">
+        <div className="header">
+          {errorMessage && <h6>{errorMessage}</h6>}
+          <div className="text">{action}</div>
+          <div className="underline"></div>
+        </div>
+        <div className="inputs">
+          {action === "Sign Up" ? (
+            <SignUpForm
+              name={name}
+              setName={setName}
+              usernameValue={usernameValue}
+              setUsernameValue={setUsernameValue}
+              emailValue={emailValue}
+              setEmailValue={setEmailValue}
+              passwordValue={passwordValue}
+              setPasswordValue={setPasswordValue}
+              confirmPasswordValue={confirmPasswordValue}
+              setConfirmPasswordValue={setConfirmPasswordValue}
+              phoneNumber={phoneNumber}
+              setPhoneNumber={setPhoneNumber}
+              addressValue={addressValue}
+              setAddressValue={setAddressValue}
+              cityValue={cityValue}
+              setCityValue={setCityValue}
+              stateValue={stateValue}
+              setStateValue={setStateValue}
+              zipCodeValue={zipCodeValue}
+              setZipCodeValue={setZipCodeValue}
+            />
+          ) : (
+            <LoginForm
+              emailValue={emailValue}
+              setEmailValue={setEmailValue}
+              passwordValue={passwordValue}
+              setPasswordValue={setPasswordValue}
+            />
+          )}
+        </div>
+        <div className="submit submit-button" onClick={handleSubmit}>
+          Submit
+        </div>
+        <div>
+          {action === "Sign Up" ? (
+            <div>
+              <span>Already have an account? </span>
+              <span className="toggle-button" onClick={handleToggleAction}>
+                Sign In
+              </span>
+            </div>
+          ) : (
+            <div>
+              <div
+                className="forgot-password"
+                onClick={() => {
+                  navigate("/service-providers/recover-password");
+                }}
+              >
+                Lost password? <span>Click Here!</span>
               </div>
-            )}
-            <div className="input">
-              <img src={email} alt="" />
-              <input
-                type="email"
-                placeholder="Email"
-                value={emailValue}
-                onChange={(e) => setEmailValue(e.target.value)}
-              />
+              <div>
+                <span>Don't have an account? </span>
+                <span className="toggle-button" onClick={handleToggleAction}>
+                  Sign Up
+                </span>
+              </div>
             </div>
-            <div className="input">
-              <img src={password} alt="" />
-              <input
-                type="password"
-                placeholder="Password"
-                value={passwordValue}
-                onChange={(e) => setPasswordValue(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="submit submit-button" onClick={handleSubmit}>
-            Submit
-          </div>
-          <div className="submit-container">
-            <div className="submit" onClick={handleToggleAction}>
-              {action === "Login" ? "Sign Up" : "Login"}
-            </div>
-          </div>
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

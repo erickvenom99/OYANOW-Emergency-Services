@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Update to useNavigate
 import email from "../../assets/email.png";
 import password from "../../assets/password.png";
 import person from "../../assets/person.png";
@@ -6,6 +7,7 @@ import axios from "axios";
 import "./SignUp.css";
 
 const SignUp = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [action, setAction] = useState("Login");
   const [name, setName] = useState("");
   const [emailValue, setEmailValue] = useState("");
@@ -13,15 +15,46 @@ const SignUp = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/sign-up", {
-        name,
-        email: emailValue,
-        password: passwordValue,
-      });
-      console.log("User created: ", response.data);
+      const response = await axios.post(
+        action === "Sign Up"
+          ? "http://localhost:5000/sign-up"
+          : "http://localhost:5000/login",
+        {
+          name,
+          email: emailValue,
+          password: passwordValue,
+        }
+      );
+      const username = response.data.username;
+      try {
+        if (response.status === 201) {
+          console.log("Account Created Successfully", response.data);
+        } else if (action === "Login") {
+          if (response.status === 200) {
+            console.log("Logged in");
+          } else {
+            console.log("Invalid Credentials");
+            return;
+          }
+        }
+      } catch (error) {
+        console.log("Account Creation Failed", error);
+      }
+      const destinationPath = "/" + { username } + "/dashboard";
+      navigate(destinationPath);
     } catch (error) {
       console.error("Error creating user:", error);
     }
+  };
+
+  const handleSignUpClick = () => {
+    setAction("Sign Up");
+    navigate("/sign-up"); // Navigate to the sign-up route
+  };
+
+  const handleLoginClick = () => {
+    setAction("Login");
+    navigate("/login"); // Navigate to the login route
   };
 
   return (
@@ -59,7 +92,7 @@ const SignUp = () => {
               <img src={password} alt="" />
               <input
                 type="password"
-                placeholder="password"
+                placeholder="Password"
                 value={passwordValue}
                 onChange={(e) => setPasswordValue(e.target.value)}
               />
@@ -78,13 +111,13 @@ const SignUp = () => {
           <div className="submit-container">
             <div
               className={action === "Login" ? "submit gray" : "submit"}
-              onClick={() => setAction("Sign Up")}
+              onClick={handleSignUpClick} // Update to use handleSignUpClick
             >
               {"Sign Up"}
             </div>
             <div
               className={action === "Sign Up" ? "submit gray" : "submit"}
-              onClick={() => setAction("Login")}
+              onClick={handleLoginClick} // Update to use handleLoginClick
             >
               {"Login"}
             </div>
@@ -94,4 +127,5 @@ const SignUp = () => {
     </>
   );
 };
+
 export default SignUp;

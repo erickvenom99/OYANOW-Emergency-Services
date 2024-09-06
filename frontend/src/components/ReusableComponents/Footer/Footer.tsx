@@ -35,7 +35,7 @@ const Footer = () => {
             </div>
             <div className="col-md-4 footer-box">
               <p>
-                <b>Subscripbe Newsletter</b>
+                <b>Subscribe Newsletter</b>
               </p>
               <input
                 type="email"
