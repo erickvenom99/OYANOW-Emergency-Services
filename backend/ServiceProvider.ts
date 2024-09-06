@@ -9,14 +9,19 @@ const ServiceProvider = new mongoose.Schema({
     address: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
+    zipcode: { type: String, required: true },
     coordinates: {
       type: { type: String, enum: ["Point"], required: true },
       coordinates: { type: [Number], required: true },
     },
   },
+  status: {
+    type: String,
+    enum: ["available", "busy"],
+    default: "available",
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  // isActive: { type: Boolean, default: true },
 });
 
 export default mongoose.model("Provider", ServiceProvider);
