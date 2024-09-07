@@ -2,71 +2,91 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import demoLogo from "../../../assets/demo-logo.png";
-import "./Navbar.css";
 
 const Navbar = () => {
   const [isNavCollapsed, setIsNavCollapsed] = useState(true);
   const handleNavCollapse = () => setIsNavCollapsed(!isNavCollapsed);
 
   return (
-    <section id="nav-bar">
-      <nav className="navbar navbar-expand-lg">
-        <div className="container-fluid">
+    <section id="nav-bar" className="sticky top-0 z-40">
+      <nav className="bg-gradient-to-r from-purple-700 to-purple-700 flex items-center justify-between p-2">
+        <div className="container mx-auto flex items-center justify-between">
           <a className="navbar-brand" href="/">
-            <img src={demoLogo} alt="Demo Logo" className="navbar-logo" />
+            <img src={demoLogo} alt="Demo Logo" className="h-10 pl-5" />
           </a>
           <button
-            className="navbar-toggler custom-toggle"
+            className="text-white text-2xl focus:outline-none md:hidden"
             type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarNav"
+            onClick={handleNavCollapse}
             aria-controls="navbarNav"
             aria-expanded={!isNavCollapsed}
             aria-label="Toggle navigation"
-            onClick={handleNavCollapse}
           >
             <FontAwesomeIcon icon={faBars} />
           </button>
           <div
-            className={`collapse navbar-collapse${
-              isNavCollapsed ? "" : " show"
-            }`}
+            className={`${
+              isNavCollapsed ? "hidden" : "block"
+            } absolute md:static md:flex md:items-center md:justify-between w-full md:w-auto bg-gradient-to-r from-purple-700 to-purple-700 md:bg-transparent top-full left-0`}
             id="navbarNav"
           >
-            <ul className="navbar-nav ms-auto">
+            <ul
+              className={`flex flex-col md:flex-row md:space-x-10 md:items-center ${
+                isNavCollapsed ? "items-start" : "items-end"
+              } p-2 md:p-0`}
+            >
               <li className="nav-item">
-                <a className="nav-link" href="/">
+                <a
+                  className="nav-link text-white text-lg font-semibold"
+                  href="/"
+                  onClick={() => setIsNavCollapsed(true)}
+                >
                   Home
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/mechanical">
+                <a
+                  className="nav-link text-white text-lg font-semibold"
+                  href="/mechanical"
+                  onClick={() => setIsNavCollapsed(true)}
+                >
                   Mechanical
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/electrical">
+                <a
+                  className="nav-link text-white text-lg font-semibold"
+                  href="/electrical"
+                  onClick={() => setIsNavCollapsed(true)}
+                >
                   Electrical
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/plumbering">
+                <a
+                  className="nav-link text-white text-lg font-semibold"
+                  href="/plumbering"
+                  onClick={() => setIsNavCollapsed(true)}
+                >
                   Plumbering
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/service-providers/login">
+                <a
+                  className="nav-link text-white text-lg font-semibold"
+                  href="/service-providers/login"
+                  onClick={() => setIsNavCollapsed(true)}
+                >
                   Service Provider
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link" href="/login">
+                <a
+                  className="nav-link text-white text-lg font-semibold"
+                  href="/login"
+                  onClick={() => setIsNavCollapsed(true)}
+                >
                   Login
-                </a>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" href="/contact">
-                  Contacts
                 </a>
               </li>
             </ul>
