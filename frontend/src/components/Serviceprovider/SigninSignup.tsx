@@ -39,7 +39,7 @@ const SigninSignup: React.FC = () => {
           email: emailValue,
           password: passwordValue,
           phoneNumber: phoneNumber,
-	  country: countryValue,
+	        country: countryValue,
           address: addressValue,
           city: cityValue,
           state: stateValue,
@@ -47,7 +47,7 @@ const SigninSignup: React.FC = () => {
         }
       );
 
-      const { username, userId } = response.data;
+      const { username, userId, orderId, coordinates } = response.data;
 
       const uniqueUsername = username + '-' + userId.slice(0, 4);
       if (action === "Sign Up") {
@@ -70,8 +70,7 @@ const SigninSignup: React.FC = () => {
         }
       }
       const destinationPath = `/${uniqueUsername}/dashboard`;
-      if (userId)
-        navigate(destinationPath);
+      navigate(destinationPath, {state: {orderId, coordinates, userId}});
       {successMessage};
     } catch (error) {
       console.error("Error creating user:", error);
@@ -87,21 +86,22 @@ const SigninSignup: React.FC = () => {
     // Clear form fields when toggling
     if (nextAction === "Sign Up") {
       navigate("/service-providers/sign-up");
-      setEmailValue("");
-      setPasswordValue("");
-    } else {
-      navigate("/service-providers/login");
       setName("");
       setUsernameValue("");
+      setEmailValue("");
+      setPasswordValue("");
       setCountryValue("");
       setAddressValue("");
-      setPasswordValue("");
       setConfirmPasswordValue("");
       setPhoneNumber("");
       setCityValue("");
       setStateValue("");
       setZipCodeValue("");
-    }
+    } else {
+      navigate("/service-providers/login");
+      setEmailValue("");
+      setPasswordValue("");
+    } 
   };
 
   return (

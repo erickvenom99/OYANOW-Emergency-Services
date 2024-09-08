@@ -21,6 +21,7 @@ const Order_1 = __importDefault(require("./Order"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const http_1 = __importDefault(require("http"));
 const socket_1 = __importDefault(require("./socket"));
+const axios = require('axios');
 const app = (0, express_1.default)();
 const PORT = 5000;
 app.use((0, cors_1.default)());
@@ -33,14 +34,34 @@ mongoose_1.default
     .catch((err) => console.error("Could not connect to MongoDB", err));
 app.post("/service-providers/sign-up", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { name, username, email, password, phoneNumber, address, city, state, zipcode } = req.body;
+        const { name, username, email, password, phoneNumber, country, address, city, state, zipcode } = req.body;
         const saltRounds = 10;
         const passwordHash = yield bcryptjs_1.default.hash(password, saltRounds);
+        // Construct full address for geocoding
+        const fullAddress = `${address}, ${city}, ${state}, ${country}, ${zipcode}`;
+        const apiKey = "8l_Oc_6LxfO8c8pPomyMBL-5Tap9jrt_ZFKH_os6gO4"; // Replace with your HERE Maps API key
+        // Get coordinates from the address
+        const geocodeResponse = yield axios.get(`https://geocode.search.hereapi.com/v1/geocode`, {
+            params: {
+                q: fullAddress,
+                apiKey: apiKey
+            }
+        });
+        if (geocodeResponse.data.items.length === 0) {
+            return res.status(400).send({ error: 'Unable to geocode address' });
+        }
+        const { position } = geocodeResponse.data.items[0];
+        const { lat, lng } = position;
         const provider = new ServiceProvider_1.default(Object.assign(Object.assign({}, req.body), { passwordHash, location: {
+                country,
                 address,
                 city,
                 state,
-                zipcode
+                zipcode,
+                coordinates: {
+                    type: 'Point',
+                    coordinates: [lng, lat],
+                },
             } }));
         yield provider.save();
         res.status(201).send(provider);
@@ -53,17 +74,19 @@ app.post("/service-providers/login", (req, res) => __awaiter(void 0, void 0, voi
     var _a;
     try {
         const { username, email, password } = req.body;
+        console.log("login attempt", { username, email });
         const provider = yield ServiceProvider_1.default.findOne({ $or: [{ username }, { email }] });
         if (!provider) {
             return res.status(400).send("invalid username/email");
         }
+        console.log("checking values from db: ", { username: provider.username, email: provider.email });
         const isMatch = yield bcryptjs_1.default.compare(password, provider.passwordHash);
         if (!isMatch) {
             return res.status(400).send("Invalid password");
         }
         // If password is correct
         res.status(200).send({
-            id: provider._id,
+            userId: provider._id,
             username: provider.username,
             name: provider.name,
             email: provider.email,

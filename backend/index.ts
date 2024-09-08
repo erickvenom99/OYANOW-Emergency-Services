@@ -68,10 +68,12 @@ app.post("/service-providers/sign-up", async (req: Request, res: Response) => {
 app.post("/service-providers/login", async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
+    console.log("login attempt", { username, email});
     const provider = await Provider.findOne({ $or: [{ username }, { email }] });
     if (!provider) {
       return res.status(400).send("invalid username/email");
     }
+    console.log("checking values from db: ", { username: provider.username, email: provider.email });
 
     const isMatch = await bcrypt.compare(password, provider.passwordHash);
     if (!isMatch) {
@@ -80,7 +82,7 @@ app.post("/service-providers/login", async (req: Request, res: Response) => {
 
     // If password is correct
     res.status(200).send({
-      id: provider._id,
+      userId: provider._id,
       username: provider.username,
       name: provider.name,
       email: provider.email,
