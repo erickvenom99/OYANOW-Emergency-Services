@@ -18,6 +18,8 @@ interface SignUpFormProps {
   setConfirmPasswordValue: (value: string) => void;
   phoneNumber: string;
   setPhoneNumber: (value: string) => void;
+  countryValue: string;
+  setCountryValue: (value: string) => void;
   setAddressValue: (value: string) => void;
   cityValue: string;
   setCityValue: (value: string) => void;
@@ -40,6 +42,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   setConfirmPasswordValue,
   phoneNumber,
   setPhoneNumber,
+  countryValue,
+  setCountryValue,
   addressValue,
   setAddressValue,
   cityValue,
@@ -105,13 +109,22 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         <div className="col-md-6">
           <FormInput
             type="text"
+            placeholder="Country"
+            value={countryValue}
+            onChange={(e) => setCountryValue(e.target.value)}
+            icon={personIcon}
+          />
+        </div>
+      </div>
+      <div>
+      <FormInput
+            type="text"
             placeholder="Address"
             value={addressValue}
             onChange={(e) => setAddressValue(e.target.value)}
             icon={personIcon}
           />
         </div>
-      </div>
       <div className="row">
         <div className="col-md-6">
           <FormInput

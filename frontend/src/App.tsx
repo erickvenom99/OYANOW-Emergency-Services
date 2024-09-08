@@ -6,6 +6,7 @@ import SigninSignup from "./components/Serviceprovider/SigninSignup";
 import Footer from "./components/ReusableComponents/Footer/Footer";
 import Navbar from "./components/ReusableComponents/Navbar/Navbar";
 import Dashboard from "./components/Dashboard/Dashboard";
+import JobListings from "./components/JobListings";
 import Map from "./components/Map/Map";
 
 const App = () => {
@@ -20,15 +21,6 @@ const App = () => {
           <Route path="/service-providers/login" element={<SigninSignup />} />
           <Route path="/service-providers/sign-up" element={<SigninSignup />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route
-            path="/map"
-            element={
-              <Map
-                apikey="8l_Oc_6LxfO8c8pPomyMBL-5Tap9jrt_ZFKH_os6gO4"
-                coordinates={DEFAULT_COORDINATES}
-              />
-            }
-          />
         </Routes>
       </div>
       <Footer />

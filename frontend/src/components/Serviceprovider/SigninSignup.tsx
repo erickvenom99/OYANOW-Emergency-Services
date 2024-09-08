@@ -11,6 +11,7 @@ const SigninSignup: React.FC = () => {
   const [usernameValue, setUsernameValue] = useState<string>("");
   const [passwordValue, setPasswordValue] = useState<string>("");
   const [confirmPasswordValue, setConfirmPasswordValue] = useState<string>("");
+  const [countryValue, setCountryValue] = useState<string>("");
   const [addressValue, setAddressValue] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [cityValue, setCityValue] = useState<string>("");
@@ -18,6 +19,7 @@ const SigninSignup: React.FC = () => {
   const [zipCodeValue, setZipCodeValue] = useState<string>("");
   const [emailValue, setEmailValue] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
@@ -37,6 +39,7 @@ const SigninSignup: React.FC = () => {
           email: emailValue,
           password: passwordValue,
           phoneNumber: phoneNumber,
+	  country: countryValue,
           address: addressValue,
           city: cityValue,
           state: stateValue,
@@ -44,11 +47,12 @@ const SigninSignup: React.FC = () => {
         }
       );
 
-      const username = response.data.username;
-      let successMessage = "";
+      const { username, userId } = response.data;
+
+      const uniqueUsername = username + '-' + userId.slice(0, 4);
       if (action === "Sign Up") {
         if (response.status === 201) {
-          successMessage = "Account Created";
+          setSuccessMessage("Account Created");
         } else {
           setErrorMessage(
             "Failed to create user. Please fill in the required information"
@@ -58,15 +62,17 @@ const SigninSignup: React.FC = () => {
         }
       } else {
         if (response.status === 200) {
-          successMessage = "Login Successful";
+          setSuccessMessage("Login Successful");
         } else {
           setErrorMessage("Incorrect Login details. Please try again.");
           console.log(errorMessage);
           return;
         }
       }
-      const destinationPath = `/${username}/dashboard`;
-      navigate(destinationPath);
+      const destinationPath = `/${uniqueUsername}/dashboard`;
+      if (userId)
+        navigate(destinationPath);
+      {successMessage};
     } catch (error) {
       console.error("Error creating user:", error);
       setErrorMessage("An error occurred. Please try again");
@@ -87,6 +93,7 @@ const SigninSignup: React.FC = () => {
       navigate("/service-providers/login");
       setName("");
       setUsernameValue("");
+      setCountryValue("");
       setAddressValue("");
       setPasswordValue("");
       setConfirmPasswordValue("");
@@ -120,6 +127,8 @@ const SigninSignup: React.FC = () => {
               setConfirmPasswordValue={setConfirmPasswordValue}
               phoneNumber={phoneNumber}
               setPhoneNumber={setPhoneNumber}
+              countryValue={countryValue}
+              setCountryValue={setCountryValue}
               addressValue={addressValue}
               setAddressValue={setAddressValue}
               cityValue={cityValue}

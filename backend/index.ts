@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import http from "http";
 import socketHandler from "./socket";
 
+const axios = require('axios');
 const app = express();
 const PORT = 5000;
 
@@ -24,10 +25,39 @@ mongoose
 
 app.post("/service-providers/sign-up", async (req: Request, res: Response) => {
   try {
-    const { password } = req.body;
+    const { name, username, email, password, phoneNumber, country, address, city, state, zipcode } = req.body;
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
-    const provider = new Provider({ ...req.body, passwordHash });
+    // Construct full address for geocoding
+    const fullAddress = `${address}, ${city}, ${state}, ${country}, ${zipcode}`;
+    const apiKey = "8l_Oc_6LxfO8c8pPomyMBL-5Tap9jrt_ZFKH_os6gO4"; // Replace with your HERE Maps API key
+
+    // Get coordinates from the address
+    const geocodeResponse = await axios.get(`https://geocode.search.hereapi.com/v1/geocode`, {
+      params: {
+        q: fullAddress,
+        apiKey: apiKey
+      }
+    });
+
+    if (geocodeResponse.data.items.length === 0) {
+      return res.status(400).send({ error: 'Unable to geocode address' });
+    }
+
+    const { position } = geocodeResponse.data.items[0];
+    const { lat, lng } = position;
+    const provider = new Provider({ ...req.body, passwordHash, location: {
+    country,
+    address,
+    city,
+    state,
+    zipcode,
+    coordinates: {
+    type: 'Point',
+    coordinates: [lng, lat],
+    },
+    },
+    });
     await provider.save();
     res.status(201).send(provider);
   } catch (error) {

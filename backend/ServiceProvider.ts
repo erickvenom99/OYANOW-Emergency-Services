@@ -6,13 +6,14 @@ const ServiceProvider = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
   location: {
+    country: {type: String, required: true},
     address: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
     zipcode: { type: String, required: true },
     coordinates: {
       type: { type: String, enum: ["Point"], required: true },
-      coordinates: { type: [Number], required: true },
+      coordinates: { type: [Number], required: true},
     },
   },
   status: {
