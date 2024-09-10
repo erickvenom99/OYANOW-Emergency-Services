@@ -6,6 +6,7 @@ import SigninSignup from "./components/Serviceprovider/SigninSignup";
 import Footer from "./components/ReusableComponents/Footer/Footer";
 import Navbar from "./components/ReusableComponents/Navbar/Navbar";
 import Dashboard from "./components/Dashboard/Dashboard";
+import UserDashboard from "./components/Dashboard/UserDashboard";
 import JobListings from "./components/JobListings";
 import Map from "./components/Map/Map";
 
@@ -21,6 +22,8 @@ const App = () => {
           <Route path="/service-providers/login" element={<SigninSignup />} />
           <Route path="/service-providers/sign-up" element={<SigninSignup />} />
           <Route path="/:username/dashboard" element={<Dashboard />} />
+          <Route path="/user/dashboard" element={<UserDashboard />} />{" "}
+          {/* Updated to avoid conflicts */}
         </Routes>
       </div>
       <Footer />
