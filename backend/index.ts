@@ -7,27 +7,36 @@ import Order from "./Order";
 import bcrypt from "bcryptjs";
 import http from "http";
 import socketHandler from "./socket";
+import axios from 'axios';
 
-const axios = require('axios');
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173", // Replace with your frontend URL
+  methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
+  credentials: true // Allow cookies and credentials
+}));
 app.use(express.json());
 
 const server = http.createServer(app);
-const io = socketHandler(server);
+const io = socketHandler(server); // Initialize Socket.IO
+
+// Declare io globally for usage in routes
+let socketIO = io;
 
 mongoose
   .connect("mongodb://localhost:27017/oyanow")
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Could not connect to MongoDB", err));
 
+// Service Provider Sign-Up
 app.post("/service-providers/sign-up", async (req: Request, res: Response) => {
   try {
     const { name, username, email, password, phoneNumber, country, address, city, state, zipcode } = req.body;
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
+    
     // Construct full address for geocoding
     const fullAddress = `${address}, ${city}, ${state}, ${country}, ${zipcode}`;
     const apiKey = "8l_Oc_6LxfO8c8pPomyMBL-5Tap9jrt_ZFKH_os6gO4"; // Replace with your HERE Maps API key
@@ -46,18 +55,23 @@ app.post("/service-providers/sign-up", async (req: Request, res: Response) => {
 
     const { position } = geocodeResponse.data.items[0];
     const { lat, lng } = position;
-    const provider = new Provider({ ...req.body, passwordHash, location: {
-    country,
-    address,
-    city,
-    state,
-    zipcode,
-    coordinates: {
-    type: 'Point',
-    coordinates: [lng, lat],
-    },
-    },
+
+    const provider = new Provider({
+      ...req.body,
+      passwordHash,
+      location: {
+        country,
+        address,
+        city,
+        state,
+        zipcode,
+        coordinates: {
+          type: 'Point',
+          coordinates: [lng, lat],
+        },
+      },
     });
+
     await provider.save();
     res.status(201).send(provider);
   } catch (error) {
@@ -65,15 +79,14 @@ app.post("/service-providers/sign-up", async (req: Request, res: Response) => {
   }
 });
 
+// Service Provider Login
 app.post("/service-providers/login", async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
-    console.log("login attempt", { username, email});
     const provider = await Provider.findOne({ $or: [{ username }, { email }] });
     if (!provider) {
       return res.status(400).send("invalid username/email");
     }
-    console.log("checking values from db: ", { username: provider.username, email: provider.email });
 
     const isMatch = await bcrypt.compare(password, provider.passwordHash);
     if (!isMatch) {
@@ -93,18 +106,21 @@ app.post("/service-providers/login", async (req: Request, res: Response) => {
   }
 });
 
+// User Sign-Up
 app.post("/user/sign-up", async (req: Request, res: Response) => {
   try {
     const { password } = req.body;
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
     const user = new User({ ...req.body, passwordHash });
+    await user.save();
     res.status(201).send(user);
   } catch (error) {
     res.status(400).send(error);
   }
 });
 
+// User Login
 app.post("/user/login", async (req: Request, res: Response) => {
   try {
     const { username, email, phoneNumber, password } = req.body;
@@ -133,6 +149,7 @@ app.post("/user/login", async (req: Request, res: Response) => {
   }
 });
 
+// Create Order
 app.post("/orders", async (req: Request, res: Response) => {
   try {
     const { userId, providerId, orderId, coordinates } = req.body;
@@ -148,7 +165,8 @@ app.post("/orders", async (req: Request, res: Response) => {
     res.status(400).send(error);
   }
 });
-// Route to accept an order by the service provider
+
+// Accept Order
 app.post("/orders/:orderId/accept", async (req: Request, res: Response) => {
   try {
     const { orderId } = req.params;
@@ -164,6 +182,7 @@ app.post("/orders/:orderId/accept", async (req: Request, res: Response) => {
   }
 });
 
+// Update Order Location
 app.put("/orders/:orderId/location", async (req: Request, res: Response) => {
   try {
     const { orderId } = req.params;
@@ -175,15 +194,19 @@ app.put("/orders/:orderId/location", async (req: Request, res: Response) => {
     );
     if (!order) return res.status(404).send("Order not found");
 
-    io.emit("locationUpdate", {
+    // Emit location update to all connected clients
+    socketIO.emit("locationUpdate", {
       orderId,
       coordinates,
     });
+
+    res.status(200).send(order); // Respond with the updated order
   } catch (error) {
     res.status(500).send(error);
   }
 });
 
-app.listen(PORT, () => {
+// Start the server
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

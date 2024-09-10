@@ -7,12 +7,32 @@ import LiveTracking from "../ReusableComponents/LiveTracking/LiveTracking"; // A
 import "../../index.css";
 import "./Dashboard.css";
 
+interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
 const Dashboard = () => {
   const { username } = useParams();
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const {orderId, coordinates} = location.state || {};
+  
+  console.log("Location State:", location.state);
+  console.log("Order ID:", orderId);
+
+  const defaultCoordinates: Coordinates = { lat: 0, lng: 0 };
+
+  let validCoordinates: Coordinates = defaultCoordinates;
+
+  if (coordinates && coordinates.coordinates.length === 2) {
+    validCoordinates = {
+      lat: coordinates.coordinates[1], // latitude
+      lng: coordinates.coordinates[0], // longitude
+    };
+  }
+  console.log("Valid Coordinates: ", validCoordinates);
   
   // Sample order ID, replace this with actual data
 
@@ -137,13 +157,11 @@ const Dashboard = () => {
         <div className="p-7 flex-1">
           <h1 className="text-2xl font-semibold">Service Provider Dashboard</h1>
           {orderId ? (
-            <LiveTracking orderId={orderId} initialCoordinates={coordinates!} />
+            <LiveTracking orderId={orderId} initialCoordinates={validCoordinates} />
+          ) : coordinates ? (
+            <LiveTracking orderId="" initialCoordinates={validCoordinates} />
           ) : (
-            coordinates ? (
-              <LiveTracking orderId={""} initialCoordinates={coordinates} />
-            ) : (
-              <p>No order or coordinates information available.</p>
-            )
+            <p>No order or coordinates information available.</p>
           )}
         </div>
       </div>

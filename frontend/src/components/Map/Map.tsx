@@ -20,18 +20,20 @@ const Map: React.FC<MapProps> = ({ apikey, coordinates }) => {
 
       const defaultLayers =
         platform.current.createDefaultLayers() as H.service.DefaultLayers;
+      
+      // Initialize the map centered at the provided coordinates
       map.current = new H.Map(mapRef.current, defaultLayers.vector.normal.map, {
         zoom: 10,
-        center: { lat: 52.5309, lng: 13.3847 },
+        center: { lat: coordinates.lat, lng: coordinates.lng }, // Center the map on the initial coordinates
       });
 
       const mapEvents = new H.mapevents.MapEvents(map.current);
       const behavior = new H.mapevents.Behavior(mapEvents);
       const ui = H.ui.UI.createDefault(map.current, defaultLayers);
 
-      //Create a marker for the service provider
-      marker.current = new H.map.Marker(coordinates);
-      map.current.addObject(marker.current);
+      // Create a marker for the service provider
+      let currentLocation = new H.map.Marker({ lat: coordinates.lat, lng: coordinates.lng });
+      map.current.addObject(currentLocation);
 
       window.addEventListener("resize", () =>
         map.current?.getViewPort().resize()
@@ -45,9 +47,10 @@ const Map: React.FC<MapProps> = ({ apikey, coordinates }) => {
 
   useEffect(() => {
     if (marker.current) {
-      marker.current.setGeometry(
-        new H.geo.Point(coordinates.lng, coordinates.lat)
-      );
+      // Update the marker position if coordinates change
+      marker.current.setGeometry(new H.geo.Point(coordinates.lng, coordinates.lat));
+      // Also update the map center if the coordinates change
+      map.current?.setCenter({ lat: coordinates.lat, lng: coordinates.lng });
     }
   }, [coordinates]);
 

@@ -21,17 +21,24 @@ const Order_1 = __importDefault(require("./Order"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const http_1 = __importDefault(require("http"));
 const socket_1 = __importDefault(require("./socket"));
-const axios = require('axios');
+const axios_1 = __importDefault(require("axios"));
 const app = (0, express_1.default)();
 const PORT = 5000;
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: "http://localhost:5173", // Replace with your frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
+    credentials: true // Allow cookies and credentials
+}));
 app.use(express_1.default.json());
 const server = http_1.default.createServer(app);
-const io = (0, socket_1.default)(server);
+const io = (0, socket_1.default)(server); // Initialize Socket.IO
+// Declare io globally for usage in routes
+let socketIO = io;
 mongoose_1.default
     .connect("mongodb://localhost:27017/oyanow")
     .then(() => console.log("Connected to MongoDB"))
     .catch((err) => console.error("Could not connect to MongoDB", err));
+// Service Provider Sign-Up
 app.post("/service-providers/sign-up", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name, username, email, password, phoneNumber, country, address, city, state, zipcode } = req.body;
@@ -41,7 +48,7 @@ app.post("/service-providers/sign-up", (req, res) => __awaiter(void 0, void 0, v
         const fullAddress = `${address}, ${city}, ${state}, ${country}, ${zipcode}`;
         const apiKey = "8l_Oc_6LxfO8c8pPomyMBL-5Tap9jrt_ZFKH_os6gO4"; // Replace with your HERE Maps API key
         // Get coordinates from the address
-        const geocodeResponse = yield axios.get(`https://geocode.search.hereapi.com/v1/geocode`, {
+        const geocodeResponse = yield axios_1.default.get(`https://geocode.search.hereapi.com/v1/geocode`, {
             params: {
                 q: fullAddress,
                 apiKey: apiKey
@@ -70,16 +77,15 @@ app.post("/service-providers/sign-up", (req, res) => __awaiter(void 0, void 0, v
         res.status(400).send(error);
     }
 }));
+// Service Provider Login
 app.post("/service-providers/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const { username, email, password } = req.body;
-        console.log("login attempt", { username, email });
         const provider = yield ServiceProvider_1.default.findOne({ $or: [{ username }, { email }] });
         if (!provider) {
             return res.status(400).send("invalid username/email");
         }
-        console.log("checking values from db: ", { username: provider.username, email: provider.email });
         const isMatch = yield bcryptjs_1.default.compare(password, provider.passwordHash);
         if (!isMatch) {
             return res.status(400).send("Invalid password");
@@ -97,18 +103,21 @@ app.post("/service-providers/login", (req, res) => __awaiter(void 0, void 0, voi
         res.status(500).send(error);
     }
 }));
+// User Sign-Up
 app.post("/user/sign-up", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { password } = req.body;
         const saltRounds = 10;
         const passwordHash = yield bcryptjs_1.default.hash(password, saltRounds);
         const user = new User_1.default(Object.assign(Object.assign({}, req.body), { passwordHash }));
+        yield user.save();
         res.status(201).send(user);
     }
     catch (error) {
         res.status(400).send(error);
     }
 }));
+// User Login
 app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -136,6 +145,7 @@ app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).send(error);
     }
 }));
+// Create Order
 app.post("/orders", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId, providerId, orderId, coordinates } = req.body;
@@ -152,7 +162,7 @@ app.post("/orders", (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(400).send(error);
     }
 }));
-// Route to accept an order by the service provider
+// Accept Order
 app.post("/orders/:orderId/accept", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { orderId } = req.params;
@@ -165,6 +175,7 @@ app.post("/orders/:orderId/accept", (req, res) => __awaiter(void 0, void 0, void
         res.status(500).send(error);
     }
 }));
+// Update Order Location
 app.put("/orders/:orderId/location", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { orderId } = req.params;
@@ -172,15 +183,18 @@ app.put("/orders/:orderId/location", (req, res) => __awaiter(void 0, void 0, voi
         const order = yield Order_1.default.findOneAndUpdate({ orderId }, { coordinates, status: "in-progress" }, { new: true });
         if (!order)
             return res.status(404).send("Order not found");
-        io.emit("locationUpdate", {
+        // Emit location update to all connected clients
+        socketIO.emit("locationUpdate", {
             orderId,
             coordinates,
         });
+        res.status(200).send(order); // Respond with the updated order
     }
     catch (error) {
         res.status(500).send(error);
     }
 }));
-app.listen(PORT, () => {
+// Start the server
+server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
