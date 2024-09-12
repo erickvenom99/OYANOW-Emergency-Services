@@ -22,8 +22,8 @@ const App = () => {
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/service-providers/login" element={<SigninSignup />} />
           <Route path="/service-providers/sign-up" element={<SigninSignup />} />
-          <Route path="/:username/dashboard" element={<Dashboard />} />
-          <Route path="/user/dashboard" element={<UserDashboard />} />{" "}
+          <Route path="/service-providers/:username/dashboard" element={<Dashboard />} />
+          <Route path="/:user/dashboard" element={<UserDashboard />} />{" "}
           {/* Updated to avoid conflicts */}
         </Routes>
       </div>

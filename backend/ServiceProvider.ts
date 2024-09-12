@@ -16,6 +16,11 @@ const ServiceProvider = new mongoose.Schema({
       coordinates: { type: [Number], required: true},
     },
   },
+  services: {
+    type: [String],
+    enum: ["Mechanic", "Electrician", "Plumber"], // Restrict to these three services
+    required: true,
+  },
   status: {
     type: String,
     enum: ["available", "busy"],

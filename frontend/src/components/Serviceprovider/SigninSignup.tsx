@@ -69,7 +69,7 @@ const SigninSignup: React.FC = () => {
           return;
         }
       }
-      const destinationPath = `/${uniqueUsername}/dashboard`;
+      const destinationPath = `/service-providers/${uniqueUsername}/dashboard`;
       navigate(destinationPath, {state: {orderId, coordinates, userId}});
       {successMessage};
     } catch (error) {
