@@ -21,7 +21,6 @@ const Order_1 = __importDefault(require("./Order"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const http_1 = __importDefault(require("http"));
 const socket_1 = __importDefault(require("./socket"));
-const axios_1 = __importDefault(require("axios"));
 const app = (0, express_1.default)();
 const PORT = 5000;
 app.use((0, cors_1.default)({
@@ -41,37 +40,30 @@ mongoose_1.default
 // Service Provider Sign-Up
 app.post("/service-providers/sign-up", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { name, username, email, password, phoneNumber, country, address, city, state, zipcode } = req.body;
+        const { name, username, email, password, phoneNumber, services, coordinates } = req.body; // Adjusted to accept coordinates
         const saltRounds = 10;
         const passwordHash = yield bcryptjs_1.default.hash(password, saltRounds);
-        // Construct full address for geocoding
-        const fullAddress = `${address}, ${city}, ${state}, ${country}, ${zipcode}`;
-        const apiKey = "8l_Oc_6LxfO8c8pPomyMBL-5Tap9jrt_ZFKH_os6gO4"; // Replace with your HERE Maps API key
-        // Get coordinates from the address
-        const geocodeResponse = yield axios_1.default.get(`https://geocode.search.hereapi.com/v1/geocode`, {
-            params: {
-                q: fullAddress,
-                apiKey: apiKey
-            }
+        // Create provider document with coordinates
+        const provider = new ServiceProvider_1.default({
+            name,
+            username,
+            email,
+            phoneNumber,
+            passwordHash,
+            location: {
+                type: 'Point',
+                coordinates: coordinates || [0, 0], // Default to [0, 0] if coordinates are not provided
+            },
+            services: services || [], // Set this based on your requirements
         });
-        if (geocodeResponse.data.items.length === 0) {
-            return res.status(400).send({ error: 'Unable to geocode address' });
-        }
-        const { position } = geocodeResponse.data.items[0];
-        const { lat, lng } = position;
-        const provider = new ServiceProvider_1.default(Object.assign(Object.assign({}, req.body), { passwordHash, location: {
-                country,
-                address,
-                city,
-                state,
-                zipcode,
-                coordinates: {
-                    type: 'Point',
-                    coordinates: [lng, lat],
-                },
-            } }));
         yield provider.save();
-        res.status(201).send(provider);
+        const locationCoordinates = provider.location ? provider.location.coordinates : null;
+        res.status(201).send({
+            userId: provider._id,
+            username: provider.username,
+            services: provider.services,
+            coordinates: locationCoordinates,
+        });
     }
     catch (error) {
         res.status(400).send(error);
@@ -104,21 +96,39 @@ app.post("/service-providers/login", (req, res) => __awaiter(void 0, void 0, voi
     }
 }));
 // User Sign-Up
-app.post("/user/sign-up", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/sign-up", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { password } = req.body;
+        const { username, email, phoneNumber, password, coordinates } = req.body;
         const saltRounds = 10;
         const passwordHash = yield bcryptjs_1.default.hash(password, saltRounds);
-        const user = new User_1.default(Object.assign(Object.assign({}, req.body), { passwordHash }));
+        // Create user document with coordinates
+        const user = new User_1.default({
+            username,
+            email,
+            phoneNumber,
+            passwordHash,
+            location: {
+                type: 'Point',
+                coordinates: coordinates || [0, 0], // Default to [0, 0] if coordinates are not provided
+            },
+        });
         yield user.save();
-        res.status(201).send(user);
+        console.log("user saved");
+        // If password is correct
+        res.status(200).send({
+            userId: user._id,
+            username: user.username,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            coordinates: user.location.coordinates, // This should now work without error
+        });
     }
     catch (error) {
-        res.status(400).send(error);
+        res.status(500).send(error);
     }
 }));
 // User Login
-app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const { username, email, phoneNumber, password } = req.body;
@@ -134,10 +144,10 @@ app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function
         }
         // If password is correct
         res.status(200).send({
-            id: user._id,
+            userId: user._id,
             username: user.username,
-            name: user.name,
             email: user.email,
+            phoneNumber: user.phoneNumber,
             coordinates: (_a = user.location) === null || _a === void 0 ? void 0 : _a.coordinates,
         });
     }

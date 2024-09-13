@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Update to useNavigate
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import email from "../../assets/email.png";
 import password from "../../assets/password.png";
 import person from "../../assets/person.png";
@@ -7,124 +7,167 @@ import axios from "axios";
 import "./SignUp.css";
 
 const SignUp = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const [action, setAction] = useState("Login");
-  const [name, setName] = useState("");
+  const [usernameValue, setUserNameValue] = useState("");
   const [emailValue, setEmailValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
+  const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
+  const [phoneNumberValue, setPhoneNumberValue] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCoordinates([latitude, longitude]);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setErrorMessage("Unable to retrieve your location.");
+        }
+      );
+    } else {
+      setErrorMessage("Geolocation is not supported by this browser.");
+    }
+  }, []);
 
   const handleSubmit = async () => {
+    if (action === "Sign Up" && passwordValue !== confirmPasswordValue) {
+      setErrorMessage("Passwords do not match");
+      return;
+    }
+
     try {
       const response = await axios.post(
         action === "Sign Up"
           ? "http://localhost:5000/sign-up"
           : "http://localhost:5000/login",
         {
-          name,
+          username: usernameValue,
           email: emailValue,
           password: passwordValue,
+          phoneNumber: phoneNumberValue,
+          location: {
+            type: "Point", // Required
+            coordinates: coordinates
+          },
         }
       );
-      const username = response.data.username;
-      try {
-        if (response.status === 201) {
-          console.log("Account Created Successfully", response.data);
-        } else if (action === "Login") {
-          if (response.status === 200) {
-            console.log("Logged in");
-          } else {
-            console.log("Invalid Credentials");
-            return;
-          }
-        }
-      } catch (error) {
-        console.log("Account Creation Failed", error);
+
+      const { username, userId } = response.data;
+      const uniqueUsername = username + userId.slice(0, 4)
+      if (action === "Sign Up" && response.status === 201) {
+        console.log("Account Created Successfully", response.data);
+      } else if (action === "Login" && response.status === 200) {
+        console.log("Logged in");
       }
-      const destinationPath = "/" + { username } + "/dashboard";
-      navigate(destinationPath);
+
+      const destinationPath = `/${uniqueUsername}/dashboard`;
+      navigate(destinationPath, { state: { username } });
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error("Error:", error);
+      setErrorMessage("An error occurred. Please try again.");
     }
   };
 
   const handleSignUpClick = () => {
     setAction("Sign Up");
-    navigate("/sign-up"); // Navigate to the sign-up route
+    navigate("/sign-up");
   };
 
   const handleLoginClick = () => {
     setAction("Login");
-    navigate("/login"); // Navigate to the login route
+    navigate("/login");
   };
 
   return (
-    <>
-      <div className="signin-signup-background">
-        <div className="signin-container">
-          <div className="header">
-            <div className="text">{action}</div>
-            <div className="underline"></div>
-          </div>
-          <div className="inputs">
-            {action === "Login" ? (
-              <div></div>
-            ) : (
+    <div className="signin-signup-background">
+      <div className="signin-container">
+        <div className="header">
+          <div className="text">{action}</div>
+          <div className="underline"></div>
+        </div>
+        <div className="inputs">
+          {action === "Sign Up" && (
+            <>
               <div className="input">
                 <img src={person} alt="" />
                 <input
                   type="text"
-                  placeholder="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Username"
+                  value={usernameValue}
+                  onChange={(e) => setUserNameValue(e.target.value)}
                 />
               </div>
-            )}
-            <div className="input">
-              <img src={email} alt="" />
-              <input
-                type="email"
-                placeholder="Email"
-                value={emailValue}
-                onChange={(e) => setEmailValue(e.target.value)}
-              />
-            </div>
-            <div className="input">
-              <img src={password} alt="" />
-              <input
-                type="password"
-                placeholder="Password"
-                value={passwordValue}
-                onChange={(e) => setPasswordValue(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="submit submit-button" onClick={handleSubmit}>
-            Submit
-          </div>
-          {action === "Sign Up" ? (
-            <div></div>
-          ) : (
-            <div className="forgot-password">
-              Lost password? <span>Click Here!</span>
-            </div>
+              <div className="input">
+                <img src={password} alt="" />
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={phoneNumberValue}
+                  onChange={(e) => setPhoneNumberValue(e.target.value)}
+                />
+              </div>
+            </>
           )}
-          <div className="submit-container">
-            <div
-              className={action === "Login" ? "submit gray" : "submit"}
-              onClick={handleSignUpClick} // Update to use handleSignUpClick
-            >
-              {"Sign Up"}
-            </div>
-            <div
-              className={action === "Sign Up" ? "submit gray" : "submit"}
-              onClick={handleLoginClick} // Update to use handleLoginClick
-            >
-              {"Login"}
-            </div>
+          <div className="input">
+            <img src={email} alt="" />
+            <input
+              type="email"
+              placeholder="Email"
+              value={emailValue}
+              onChange={(e) => setEmailValue(e.target.value)}
+            />
+          </div>
+          <div className="input">
+            <img src={password} alt="" />
+            <input
+              type="password"
+              placeholder="Password"
+              value={passwordValue}
+              onChange={(e) => setPasswordValue(e.target.value)}
+            />
+            {action === "Sign Up" && (
+            <div className="input">
+                <img src={password} alt="" />
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPasswordValue}
+                  onChange={(e) => setConfirmPasswordValue(e.target.value)}
+                />
+              </div>
+            )};
           </div>
         </div>
+        <div className="submit submit-button" onClick={handleSubmit}>
+          Submit
+        </div>
+        {action === "Login" && (
+          <div className="forgot-password">
+            Lost password? <span>Click Here!</span>
+          </div>
+        )}
+        <div className="submit-container">
+          <div
+            className={action === "Login" ? "submit gray" : "submit"}
+            onClick={handleSignUpClick}
+          >
+            Sign Up
+          </div>
+          <div
+            className={action === "Sign Up" ? "submit gray" : "submit"}
+            onClick={handleLoginClick}
+          >
+            Login
+          </div>
+        </div>
+        {errorMessage && <div className="error-message">{errorMessage}</div>}
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import SignUpForm from "./SignUpForm";
@@ -11,22 +11,37 @@ const SigninSignup: React.FC = () => {
   const [usernameValue, setUsernameValue] = useState<string>("");
   const [passwordValue, setPasswordValue] = useState<string>("");
   const [confirmPasswordValue, setConfirmPasswordValue] = useState<string>("");
-  const [countryValue, setCountryValue] = useState<string>("");
-  const [addressValue, setAddressValue] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [cityValue, setCityValue] = useState<string>("");
-  const [stateValue, setStateValue] = useState<string>("");
-  const [zipCodeValue, setZipCodeValue] = useState<string>("");
   const [emailValue, setEmailValue] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [successMessage, setSuccessMessage] = useState<string>("");
+  const [selectedService, setSelectedService] = useState<string>("");
+  const [coordinates, setCoordinates] = useState<[number, number] | null>(null); // New state for coordinates
   const navigate = useNavigate();
+
+  // Request live location on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCoordinates([latitude, longitude]); // Set coordinates state
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setErrorMessage("Unable to retrieve your location.");
+        }
+      );
+    } else {
+      setErrorMessage("Geolocation is not supported by this browser.");
+    }
+  }, []);
 
   const handleSubmit = async () => {
     setErrorMessage("");
     if (action === "Sign Up" && passwordValue !== confirmPasswordValue) {
       setErrorMessage("Error: Passwords do not match");
-      return; // Prevent further execution
+      return;
     }
     try {
       const response = await axios.post(
@@ -39,25 +54,19 @@ const SigninSignup: React.FC = () => {
           email: emailValue,
           password: passwordValue,
           phoneNumber: phoneNumber,
-	        country: countryValue,
-          address: addressValue,
-          city: cityValue,
-          state: stateValue,
-          zipcode: zipCodeValue,
+          services: selectedService,
+          coordinates: coordinates ? { type: "Point", coordinates } : null, // Include coordinates
         }
       );
 
-      const { username, userId, orderId, coordinates } = response.data;
+      const { username, userId, orderId } = response.data;
 
       const uniqueUsername = username + '-' + userId.slice(0, 4);
       if (action === "Sign Up") {
         if (response.status === 201) {
           setSuccessMessage("Account Created");
         } else {
-          setErrorMessage(
-            "Failed to create user. Please fill in the required information"
-          );
-          console.log(errorMessage);
+          setErrorMessage("Failed to create user. Please fill in the required information");
           return;
         }
       } else {
@@ -65,13 +74,11 @@ const SigninSignup: React.FC = () => {
           setSuccessMessage("Login Successful");
         } else {
           setErrorMessage("Incorrect Login details. Please try again.");
-          console.log(errorMessage);
           return;
         }
       }
       const destinationPath = `/service-providers/${uniqueUsername}/dashboard`;
-      navigate(destinationPath, {state: {orderId, coordinates, userId}});
-      {successMessage};
+      navigate(destinationPath, { state: { orderId, coordinates, userId, username } });
     } catch (error) {
       console.error("Error creating user:", error);
       setErrorMessage("An error occurred. Please try again");
@@ -79,10 +86,8 @@ const SigninSignup: React.FC = () => {
   };
 
   const handleToggleAction = () => {
-    // Determine the next action
     const nextAction = action === "Login" ? "Sign Up" : "Login";
     setAction(nextAction);
-
     // Clear form fields when toggling
     if (nextAction === "Sign Up") {
       navigate("/service-providers/sign-up");
@@ -90,18 +95,13 @@ const SigninSignup: React.FC = () => {
       setUsernameValue("");
       setEmailValue("");
       setPasswordValue("");
-      setCountryValue("");
-      setAddressValue("");
       setConfirmPasswordValue("");
       setPhoneNumber("");
-      setCityValue("");
-      setStateValue("");
-      setZipCodeValue("");
     } else {
       navigate("/service-providers/login");
       setEmailValue("");
       setPasswordValue("");
-    } 
+    }
   };
 
   return (
@@ -127,16 +127,9 @@ const SigninSignup: React.FC = () => {
               setConfirmPasswordValue={setConfirmPasswordValue}
               phoneNumber={phoneNumber}
               setPhoneNumber={setPhoneNumber}
-              countryValue={countryValue}
-              setCountryValue={setCountryValue}
-              addressValue={addressValue}
-              setAddressValue={setAddressValue}
-              cityValue={cityValue}
-              setCityValue={setCityValue}
-              stateValue={stateValue}
-              setStateValue={setStateValue}
-              zipCodeValue={zipCodeValue}
-              setZipCodeValue={setZipCodeValue}
+              selectedService={selectedService}
+              setSelectedService={setSelectedService}
+              setCoordinates={setCoordinates} // Pass the setter for coordinates
             />
           ) : (
             <LoginForm

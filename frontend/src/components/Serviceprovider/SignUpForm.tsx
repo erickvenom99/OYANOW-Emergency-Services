@@ -1,4 +1,3 @@
-// SignUpForm.tsx
 import React from "react";
 import FormInput from "./FormInput";
 import personIcon from "../../assets/person.png";
@@ -9,24 +8,17 @@ interface SignUpFormProps {
   setName: (value: string) => void;
   usernameValue: string;
   setUsernameValue: (value: string) => void;
-  addressValue: string;
-  passwordValue: string;
   emailValue: string;
   setEmailValue: (value: string) => void;
+  passwordValue: string;
   setPasswordValue: (value: string) => void;
   confirmPasswordValue: string;
   setConfirmPasswordValue: (value: string) => void;
   phoneNumber: string;
   setPhoneNumber: (value: string) => void;
-  countryValue: string;
-  setCountryValue: (value: string) => void;
-  setAddressValue: (value: string) => void;
-  cityValue: string;
-  setCityValue: (value: string) => void;
-  stateValue: string;
-  setStateValue: (value: string) => void;
-  zipCodeValue: string;
-  setZipCodeValue: (value: string) => void;
+  selectedService: string; // Change to a single string
+  setSelectedService: (value: string) => void; // Change to a setter for a single string
+  setCoordinates: (value: [number, number] | null) => void; 
 }
 
 const SignUpForm: React.FC<SignUpFormProps> = ({
@@ -42,17 +34,15 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   setConfirmPasswordValue,
   phoneNumber,
   setPhoneNumber,
-  countryValue,
-  setCountryValue,
-  addressValue,
-  setAddressValue,
-  cityValue,
-  setCityValue,
-  stateValue,
-  setStateValue,
-  zipCodeValue,
-  setZipCodeValue,
+  selectedService,
+  setSelectedService,
 }) => {
+  const services = ["Mechanic", "Electrician", "Plumber"];
+
+  const handleServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedService(e.target.value); // Store the selected service as a string
+  };
+
   return (
     <>
       <FormInput
@@ -99,59 +89,32 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       <div className="row">
         <div className="col-md-6">
           <FormInput
-            type="number"
+            type="tel"
             placeholder="Phone Number"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             icon={passwordIcon}
           />
         </div>
-        <div className="col-md-6">
-          <FormInput
-            type="text"
-            placeholder="Country"
-            value={countryValue}
-            onChange={(e) => setCountryValue(e.target.value)}
-            icon={personIcon}
-          />
-        </div>
       </div>
-      <div>
-      <FormInput
-            type="text"
-            placeholder="Address"
-            value={addressValue}
-            onChange={(e) => setAddressValue(e.target.value)}
-            icon={personIcon}
-          />
-        </div>
       <div className="row">
-        <div className="col-md-6">
-          <FormInput
-            type="text"
-            placeholder="State"
-            value={stateValue}
-            onChange={(e) => setStateValue(e.target.value)}
-            icon={personIcon}
-          />
-        </div>
-        <div className="col-md-6">
-          <FormInput
-            type="text"
-            placeholder="City"
-            value={cityValue}
-            onChange={(e) => setCityValue(e.target.value)}
-            icon={personIcon}
-          />
+        <div className="col-md-12">
+          <label htmlFor="services" className="block mb-2">Select Service</label>
+          <select
+            id="services"
+            value={selectedService} // Now a single string
+            onChange={handleServiceChange}
+            className="w-full bg-transparent border border-gray-300 p-2"
+          >
+            <option value="" disabled>Select Service</option>
+            {services.map(service => (
+              <option key={service} value={service}>
+                {service}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
-      <FormInput
-        type="text"
-        placeholder="Zip Code"
-        value={zipCodeValue}
-        onChange={(e) => setZipCodeValue(e.target.value)}
-        icon={personIcon}
-      />
     </>
   );
 };

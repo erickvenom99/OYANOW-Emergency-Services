@@ -1,21 +1,30 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
-const User = new mongoose.Schema({
+interface ILocation {
+  type: "Point";
+  coordinates: number[];
+}
+
+export interface IUser extends Document {
+  username: string;
+  email: string;
+  phoneNumber: string;
+  passwordHash: string;
+  location: ILocation;
+}
+
+const userSchema = new Schema<IUser>({
   username: { type: String, required: true },
-  name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phoneNumber: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
   location: {
-    address: { type: String, required: true },
-    city: { type: String },
-    state: { type: String },
-    zip: { type: String },
-    coordinates: {
-      type: { type: String, enum: ["Point"], required: true },
-      coordinates: { type: [Number], required: true },
-    },
+    type: { type: String, enum: ["Point"], required: true },
+    coordinates: { type: [Number], required: true },
   },
 });
 
-export default mongoose.model("User", User);
+// Index for geospatial queries
+userSchema.index({ location: '2dsphere' });
+
+export default mongoose.model<IUser>("User", userSchema);

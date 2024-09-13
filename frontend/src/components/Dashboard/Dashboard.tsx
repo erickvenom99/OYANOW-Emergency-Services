@@ -13,11 +13,11 @@ interface Coordinates {
 }
 
 const Dashboard = () => {
-  const { username } = useParams();
+  const uniqueUsername = useParams();
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  const { orderId, coordinates } = location.state || {};
+  const { orderId, coordinates, username } = location.state || {};
   
   console.log("Location State:", location.state);
   console.log("Order ID:", orderId);
@@ -26,13 +26,16 @@ const Dashboard = () => {
 
   let validCoordinates: Coordinates = defaultCoordinates;
 
-  if (coordinates && coordinates.coordinates.length === 2) {
-    validCoordinates = {
-      lat: coordinates.coordinates[1], // latitude
-      lng: coordinates.coordinates[0], // longitude
-    };
-  }
-  console.log("Valid Coordinates: ", validCoordinates);
+if (coordinates && coordinates.coordinates && Array.isArray(coordinates.coordinates) && coordinates.coordinates.length === 2) {
+  validCoordinates = {
+    lat: coordinates.coordinates[1], // latitude
+    lng: coordinates.coordinates[0], // longitude
+  };
+} else {
+  console.warn("Coordinates are not in the expected format:", coordinates);
+}
+
+console.log("Valid Coordinates: ", validCoordinates);
 
   // Sample order ID, replace this with actual data
 

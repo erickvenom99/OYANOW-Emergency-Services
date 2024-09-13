@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import Provider from "./ServiceProvider";
-import User from "./User";
+import User, { IUser } from "./User";
 import Order from "./Order";
 import bcrypt from "bcryptjs";
 import http from "http";
@@ -33,47 +33,33 @@ mongoose
 // Service Provider Sign-Up
 app.post("/service-providers/sign-up", async (req: Request, res: Response) => {
   try {
-    const { name, username, email, password, phoneNumber, country, address, city, state, zipcode } = req.body;
+    const { name, username, email, password, phoneNumber, services, coordinates } = req.body; // Adjusted to accept coordinates
+
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
-    
-    // Construct full address for geocoding
-    const fullAddress = `${address}, ${city}, ${state}, ${country}, ${zipcode}`;
-    const apiKey = "8l_Oc_6LxfO8c8pPomyMBL-5Tap9jrt_ZFKH_os6gO4"; // Replace with your HERE Maps API key
 
-    // Get coordinates from the address
-    const geocodeResponse = await axios.get(`https://geocode.search.hereapi.com/v1/geocode`, {
-      params: {
-        q: fullAddress,
-        apiKey: apiKey
-      }
-    });
-
-    if (geocodeResponse.data.items.length === 0) {
-      return res.status(400).send({ error: 'Unable to geocode address' });
-    }
-
-    const { position } = geocodeResponse.data.items[0];
-    const { lat, lng } = position;
-
+    // Create provider document with coordinates
     const provider = new Provider({
-      ...req.body,
+      name,
+      username,
+      email,
+      phoneNumber,
       passwordHash,
       location: {
-        country,
-        address,
-        city,
-        state,
-        zipcode,
-        coordinates: {
-          type: 'Point',
-          coordinates: [lng, lat],
-        },
+        type: 'Point',
+        coordinates: coordinates || [0, 0], // Default to [0, 0] if coordinates are not provided
       },
+      services: services || [], // Set this based on your requirements
     });
 
     await provider.save();
-    res.status(201).send(provider);
+    const locationCoordinates = provider.location ? provider.location.coordinates : null;
+    res.status(201).send({
+    userId: provider._id,
+    username: provider.username,
+    services: provider.services,
+    coordinates: locationCoordinates,
+    });
   } catch (error) {
     res.status(400).send(error);
   }
@@ -107,30 +93,51 @@ app.post("/service-providers/login", async (req: Request, res: Response) => {
 });
 
 // User Sign-Up
-app.post("/user/sign-up", async (req: Request, res: Response) => {
+app.post("/sign-up", async (req: Request, res: Response) => {
   try {
-    const { password } = req.body;
+    const { username, email, phoneNumber, password, coordinates } = req.body;
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
-    const user = new User({ ...req.body, passwordHash });
+
+    // Create user document with coordinates
+    const user = new User({
+      username,
+      email,
+      phoneNumber,
+      passwordHash,
+      location: {
+        type: 'Point',
+        coordinates: coordinates || [0, 0], // Default to [0, 0] if coordinates are not provided
+      },
+    });
+
     await user.save();
-    res.status(201).send(user);
+    console.log("user saved");
+    // If password is correct
+    res.status(200).send({
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      coordinates: user.location.coordinates, // This should now work without error
+    });
   } catch (error) {
-    res.status(400).send(error);
+    res.status(500).send(error);
   }
 });
 
 // User Login
-app.post("/user/login", async (req: Request, res: Response) => {
+app.post("/login", async (req: Request, res: Response) => {
   try {
     const { username, email, phoneNumber, password } = req.body;
-    const user = await User.findOne({
+    const user: IUser | null = await User.findOne({
       $or: [{ username }, { email }, { phoneNumber }],
     });
+
     if (!user) {
       return res.status(400).send("invalid username/email");
     }
-
+    
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       return res.status(400).send("Invalid password");
@@ -138,10 +145,10 @@ app.post("/user/login", async (req: Request, res: Response) => {
 
     // If password is correct
     res.status(200).send({
-      id: user._id,
+      userId: user._id,
       username: user.username,
-      name: user.name,
       email: user.email,
+      phoneNumber: user.phoneNumber,
       coordinates: user.location?.coordinates,
     });
   } catch (error) {

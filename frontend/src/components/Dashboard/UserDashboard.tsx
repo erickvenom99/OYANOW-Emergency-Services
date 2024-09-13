@@ -1,10 +1,28 @@
+import { useLocation } from "react-router-dom"
+import { useState } from "react";
 
 const UserDashboard = () => {
+  const location = useLocation();
+  const { username } = location.state || {};
+
+  const [activeService, setActiveService] = useState<string | null>(null);
+
+  // Define services type
+  type Services = {
+    [key: string]: string[];
+  };
+
+  const services: Services = {
+    Mechanic: ["Mechanic A", "Mechanic B", "Mechanic C"],
+    Plumber: ["Plumber A", "Plumber B"],
+    Electrician: ["Electrician A", "Electrician B", "Electrician C"]
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Main Content */}
       <main className="container mx-auto p-3">
-        <h2 className="text-2xl font-semibold mb-4">Welcome, [User's Name]!</h2>
+        <h2 className="text-2xl font-semibold mb-4">Welcome, {username}!</h2>
 
         {/* Service Quick Access Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
