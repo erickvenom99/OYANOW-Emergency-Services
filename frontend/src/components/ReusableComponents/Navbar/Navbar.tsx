@@ -1,7 +1,8 @@
+import React from "react";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
-import demoLogo from "../../../assets/demo-logo.png";
+import oyanowImage from "../../../assets/oyanows.png";
 
 const Navbar = () => {
   const [isNavCollapsed, setIsNavCollapsed] = useState(true);
@@ -12,7 +13,7 @@ const Navbar = () => {
       <nav className="bg-gradient-to-r from-purple-700 to-purple-700 flex items-center justify-between p-2">
         <div className="container mx-auto flex items-center justify-between">
           <a className="navbar-brand" href="/">
-            <img src={demoLogo} alt="Demo Logo" className="h-10 pl-5" />
+            <img src={oyanowImage} alt="Demo Logo" className="h-12 pl-5" />
           </a>
           <button
             className="text-white text-2xl focus:outline-none md:hidden"

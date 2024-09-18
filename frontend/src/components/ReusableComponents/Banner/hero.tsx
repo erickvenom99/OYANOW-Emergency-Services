@@ -1,3 +1,4 @@
+import React from "react";
 import { FaPlay } from "react-icons/fa";
 {
   /* import Heroimg from "../.../assets/dumbell.png" */

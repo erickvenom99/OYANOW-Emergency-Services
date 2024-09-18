@@ -7,7 +7,9 @@ module.exports = {
         'custom-gradient': 'linear-gradient(to right, rgb(126, 34, 206), rgb(88, 28, 135))',
       },
       fontFamily: {
-        playfair: ["Playfair Display", "serift"],
+        playfair: ["Playfair Display", "serif"],
+        demserif: ["DM Serif Display", "serif"],
+        com: ["Comfortaa", "cursive"],
       },
       colors: {
         "dark-purple": "#081A51",
