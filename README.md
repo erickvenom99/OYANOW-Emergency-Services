@@ -10,7 +10,7 @@ service provided by oyanow
 4. solar system installation and maintenance
 
 
-![Screenshot 2024-09-19 211624](https://github.com/user-attachments/assets/3ef00042-3c9b-471b-9a1e-394e195c09cd)
+![Screenshot 2024-09-19 211624](https://github.com/user-attachments/assets/871bb0ab-53fd-4cd8-a2bd-8e2eeecb6d5f)
 
 
 
