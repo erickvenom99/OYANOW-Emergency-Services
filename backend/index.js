@@ -15,9 +15,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const cors_1 = __importDefault(require("cors"));
-const ServiceProvider_1 = __importDefault(require("./ServiceProvider"));
-const User_1 = __importDefault(require("./User"));
-const Order_1 = __importDefault(require("./Order"));
+const ServiceProvider_1 = __importDefault(require("./ServiceProvider/ServiceProvider"));
+const User_1 = __importDefault(require("./User/User"));
+const Order_1 = __importDefault(require("./Order/Order"));
+const Notification_1 = __importDefault(require("./Notification/Notification"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const http_1 = __importDefault(require("http"));
 const socket_1 = __importDefault(require("./socket"));
@@ -40,10 +41,9 @@ mongoose_1.default
 // Service Provider Sign-Up
 app.post("/service-providers/sign-up", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { name, username, email, password, phoneNumber, services, coordinates } = req.body; // Adjusted to accept coordinates
+        const { name, username, email, password, phoneNumber, services, coordinates } = req.body;
         const saltRounds = 10;
         const passwordHash = yield bcryptjs_1.default.hash(password, saltRounds);
-        // Create provider document with coordinates
         const provider = new ServiceProvider_1.default({
             name,
             username,
@@ -52,17 +52,16 @@ app.post("/service-providers/sign-up", (req, res) => __awaiter(void 0, void 0, v
             passwordHash,
             location: {
                 type: 'Point',
-                coordinates: coordinates || [0, 0], // Default to [0, 0] if coordinates are not provided
+                coordinates: coordinates || [0, 0],
             },
-            services: services || [], // Set this based on your requirements
+            services: services || [],
         });
         yield provider.save();
-        const locationCoordinates = provider.location ? provider.location.coordinates : null;
         res.status(201).send({
-            userId: provider._id,
+            providerId: provider._id,
             username: provider.username,
             services: provider.services,
-            coordinates: locationCoordinates,
+            coordinates: provider.location.coordinates, // Ensure this is accessed correctly
         });
     }
     catch (error) {
@@ -71,7 +70,6 @@ app.post("/service-providers/sign-up", (req, res) => __awaiter(void 0, void 0, v
 }));
 // Service Provider Login
 app.post("/service-providers/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     try {
         const { username, email, password } = req.body;
         const provider = yield ServiceProvider_1.default.findOne({ $or: [{ username }, { email }] });
@@ -82,17 +80,62 @@ app.post("/service-providers/login", (req, res) => __awaiter(void 0, void 0, voi
         if (!isMatch) {
             return res.status(400).send("Invalid password");
         }
+        console.log("API Response:", provider.location.coordinates);
+        const uniqueUsername = provider.username + "-" + provider._id.slice(0, 4);
         // If password is correct
         res.status(200).send({
-            userId: provider._id,
+            providerId: provider._id,
             username: provider.username,
             name: provider.name,
             email: provider.email,
-            coordinates: (_a = provider.location) === null || _a === void 0 ? void 0 : _a.coordinates,
+            coordinates: provider.location.coordinates,
+            uniqueUsername: uniqueUsername,
         });
     }
     catch (error) {
         res.status(500).send(error);
+    }
+}));
+// Fetch Notifications for a Provider
+app.get("/notifications/:providerId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { providerId } = req.params;
+        // Fetch notifications for the specific provider
+        const notifications = yield Notification_1.default.find({ providerId }).sort({ createdAt: -1 }); // Sort by newest first
+        res.status(200).send(notifications);
+    }
+    catch (error) {
+        console.error("Error fetching notifications:", error);
+        res.status(500).send("Internal Server Error");
+    }
+}));
+// Get Providers by Service Type Sorted by Proximity
+app.get("/api/providers", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { service } = req.query;
+    const longitude = parseFloat(req.query.longitude); // Expecting coordinates in query params 
+    const latitude = parseFloat(req.query.latitude); // Expecting coordinates in query params
+    if (!service || !longitude || !latitude) {
+        return res.status(400).send("Service type and coordinates are required.");
+    }
+    try {
+        const providers = yield ServiceProvider_1.default.find({
+            services: service, // Filter by service type
+            location: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [longitude, latitude],
+                    },
+                    $maxDistance: 100000, // Max distance in meters (10 km)
+                },
+            },
+        })
+            .select("name username email phoneNumber location"); // Select fields to return
+        res.status(200).send(providers);
+    }
+    catch (error) {
+        console.error("Error retrieving providers:", error);
+        res.status(500).send("Internal Server Error");
     }
 }));
 // User Sign-Up
@@ -156,54 +199,76 @@ app.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 }));
 // Create Order
-app.post("/orders", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/orders/create-order", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("Request Body:", req.body);
     try {
-        const { userId, providerId, orderId, coordinates } = req.body;
+        const { userId, providerId, location } = req.body;
+        const { coordinates } = location;
+        if (!Array.isArray(coordinates) || coordinates.length !== 2) {
+            return res.status(400).send("Invalid coordinates format.");
+        }
         const order = new Order_1.default({
             user: userId,
             provider: providerId,
-            orderId,
-            coordinates,
+            status: "pending",
+            location: {
+                type: 'Point',
+                coordinates: coordinates || [0, 0],
+            },
         });
         yield order.save();
+        const orderId = order._id;
+        // Create a notification for the provider
+        const notification = new Notification_1.default({
+            providerId,
+            message: `You have a new order (Order ID: ${orderId}). Please check your dashboard for details.`,
+            orderId,
+        });
+        yield notification.save(); // Save the notification to the database
+        socketIO.emit("newOrder", {
+            providerId,
+            orderId,
+            message: `You have a new order (Order ID: ${orderId}).`,
+        });
+        console.log('Notification sent to provider:', providerId);
         res.status(201).send(order);
     }
     catch (error) {
         res.status(400).send(error);
     }
 }));
-// Accept Order
+//Accept Order
 app.post("/orders/:orderId/accept", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { orderId } = req.params;
-        const order = yield Order_1.default.findOneAndUpdate({ orderId }, { status: "accepted" }, { new: true });
-        if (!order)
-            return res.status(404).send("Order not found");
-        res.status(200).send(order);
+        const { orderId } = req.body;
+        const order = yield Order_1.default.findOne({ $or: [{ user: "orderId" }] });
+        res.status(201).send(order);
     }
     catch (error) {
-        res.status(500).send(error);
+        res.status(400).send(error);
     }
 }));
 // Update Order Location
-app.put("/orders/:orderId/location", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { orderId } = req.params;
-        const { coordinates } = req.body;
-        const order = yield Order_1.default.findOneAndUpdate({ orderId }, { coordinates, status: "in-progress" }, { new: true });
-        if (!order)
-            return res.status(404).send("Order not found");
-        // Emit location update to all connected clients
-        socketIO.emit("locationUpdate", {
-            orderId,
-            coordinates,
-        });
-        res.status(200).send(order); // Respond with the updated order
-    }
-    catch (error) {
-        res.status(500).send(error);
-    }
-}));
+// app.put("/orders/:orderId/location", async (req: Request, res: Response) => {
+//   try {
+//     const { orderId } = req.params;
+//     const { coordinates } = req.body;
+//     const order = await Order.findOneAndUpdate(
+//       { orderId },
+//       { coordinates, status: "in-progress" },
+//       { new: true }
+//     );
+//     if (!order) return res.status(404).send("Order not found");
+//     // Emit location update to all connected clients
+//     socketIO.emit("locationUpdate", {
+//       orderId,
+//       coordinates,
+//     });
+//     res.status(200).send(order); // Respond with the updated order
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// });
 // Start the server
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
