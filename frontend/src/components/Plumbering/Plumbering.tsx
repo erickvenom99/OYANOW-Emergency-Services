@@ -41,7 +41,7 @@ const Plumbering = () => {
               >
                 <h2 className="text-purple-600">Oyanow Plumbering Service </h2>
                     <p className="text-4sm font-com">
-                        When your vehicle breaks down, every minute counts. Oyanow is known for its rapid response times, dispatching skilled technicians who arrive equipped to handle a variety of automotive issues. This swift action minimizes downtime and gets you back on the road as soon as possible.
+                    When water is pouring into your home, every second counts. Oyanow is known for its quick response times, dispatching skilled plumbers who arrive promptly to assess and resolve the issue, minimizing damage and stress for homeowners.
                     </p>
                     <p className="text-4sm font-com">
                         The team at Oyanow consists of licensed and experienced plumbers who are well-equipped to handle a wide range of plumbing issues. From fixing leaks and unclogging drains to installing new fixtures, their expertise ensures that problems are solved efficiently and correctly.
