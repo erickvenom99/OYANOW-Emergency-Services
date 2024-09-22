@@ -48,16 +48,16 @@ const Navbar = () => {
               <li className="nav-item">
                 <a
                   className="nav-link text-white text-lg font-semibold"
-                  href="/mechanical"
+                  href="/Automobile"
                   onClick={() => setIsNavCollapsed(true)}
                 >
-                  Mechanical
+                  Automobile
                 </a>
               </li>
               <li className="nav-item">
                 <a
                   className="nav-link text-white text-lg font-semibold"
-                  href="/electrical"
+                  href="/Electrical"
                   onClick={() => setIsNavCollapsed(true)}
                 >
                   Electrical
@@ -66,7 +66,7 @@ const Navbar = () => {
               <li className="nav-item">
                 <a
                   className="nav-link text-white text-lg font-semibold"
-                  href="/plumbering"
+                  href="/Plumbering"
                   onClick={() => setIsNavCollapsed(true)}
                 >
                   Plumbering
