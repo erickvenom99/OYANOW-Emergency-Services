@@ -32,13 +32,12 @@ const OrderSchema = new mongoose_1.Schema({
         ref: "Provider",
         required: true,
     },
-    orderId: { type: String, required: true, unique: true },
     status: {
         type: String,
         enum: ["pending", "accepted", "in-progress", "completed", "canceled"],
         default: "pending",
     },
-    coordinates: {
+    location: {
         type: { type: String, enum: ["Point"], required: true },
         coordinates: { type: [Number], required: true },
     },

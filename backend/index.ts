@@ -1,9 +1,10 @@
 import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import Provider from "./ServiceProvider";
-import User, { IUser } from "./User";
-import Order from "./Order";
+import Provider, { IServiceProvider } from "./ServiceProvider/ServiceProvider";
+import User, { IUser } from "./User/User";
+import Order from "./Order/Order";
+import Notification from "./Notification/Notification"
 import bcrypt from "bcryptjs";
 import http from "http";
 import socketHandler from "./socket";
@@ -33,12 +34,11 @@ mongoose
 // Service Provider Sign-Up
 app.post("/service-providers/sign-up", async (req: Request, res: Response) => {
   try {
-    const { name, username, email, password, phoneNumber, services, coordinates } = req.body; // Adjusted to accept coordinates
+    const { name, username, email, password, phoneNumber, services, coordinates } = req.body;
 
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create provider document with coordinates
     const provider = new Provider({
       name,
       username,
@@ -47,29 +47,30 @@ app.post("/service-providers/sign-up", async (req: Request, res: Response) => {
       passwordHash,
       location: {
         type: 'Point',
-        coordinates: coordinates || [0, 0], // Default to [0, 0] if coordinates are not provided
+        coordinates: coordinates || [0, 0],
       },
-      services: services || [], // Set this based on your requirements
+      services: services || [],
     });
 
     await provider.save();
-    const locationCoordinates = provider.location ? provider.location.coordinates : null;
     res.status(201).send({
-    userId: provider._id,
-    username: provider.username,
-    services: provider.services,
-    coordinates: locationCoordinates,
+      providerId: provider._id,
+      username: provider.username,
+      services: provider.services,
+      coordinates: provider.location.coordinates, // Ensure this is accessed correctly
     });
   } catch (error) {
     res.status(400).send(error);
   }
 });
 
+
 // Service Provider Login
 app.post("/service-providers/login", async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
-    const provider = await Provider.findOne({ $or: [{ username }, { email }] });
+    
+    const provider : IServiceProvider | null = await Provider.findOne({ $or: [{ username }, { email }] });
     if (!provider) {
       return res.status(400).send("invalid username/email");
     }
@@ -78,17 +79,66 @@ app.post("/service-providers/login", async (req: Request, res: Response) => {
     if (!isMatch) {
       return res.status(400).send("Invalid password");
     }
-
+    console.log("API Response:", provider.location.coordinates);
+    const uniqueUsername = provider.username + "-" + provider._id.slice(0, 4);
     // If password is correct
     res.status(200).send({
-      userId: provider._id,
+      providerId: provider._id,
       username: provider.username,
       name: provider.name,
       email: provider.email,
-      coordinates: provider.location?.coordinates,
+      coordinates: provider.location.coordinates,
+      uniqueUsername: uniqueUsername,
     });
   } catch (error) {
     res.status(500).send(error);
+  }
+});
+
+// Fetch Notifications for a Provider
+app.get("/notifications/:providerId", async (req: Request, res: Response) => {
+  try {
+    const { providerId } = req.params;
+
+    // Fetch notifications for the specific provider
+    const notifications = await Notification.find({ providerId }).sort({ createdAt: -1 }); // Sort by newest first
+
+    res.status(200).send(notifications);
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// Get Providers by Service Type Sorted by Proximity
+app.get("/api/providers", async (req: Request, res: Response) => {
+  const { service } = req.query;
+  const longitude = parseFloat(req.query.longitude as string); // Expecting coordinates in query params 
+  const latitude = parseFloat(req.query.latitude as string); // Expecting coordinates in query params
+
+  if (!service || !longitude || !latitude) {
+    return res.status(400).send("Service type and coordinates are required.");
+  }
+
+  try {
+    const providers = await Provider.find({
+      services: service, // Filter by service type
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+          $maxDistance: 100000, // Max distance in meters (10 km)
+        },
+      },
+    })
+    .select("name username email phoneNumber location"); // Select fields to return
+
+    res.status(200).send(providers);
+  } catch (error) {
+    console.error("Error retrieving providers:", error);
+    res.status(500).send("Internal Server Error");
   }
 });
 
@@ -157,61 +207,81 @@ app.post("/login", async (req: Request, res: Response) => {
 });
 
 // Create Order
-app.post("/orders", async (req: Request, res: Response) => {
+app.post("/orders/create-order", async (req: Request, res: Response) => {
+  console.log("Request Body:", req.body);
   try {
-    const { userId, providerId, orderId, coordinates } = req.body;
+    const { userId, providerId, location } = req.body;
+    const { coordinates } = location;
+    if (!Array.isArray(coordinates) || coordinates.length !== 2) {
+      return res.status(400).send("Invalid coordinates format.");
+  }
     const order = new Order({
       user: userId,
       provider: providerId,
-      orderId,
-      coordinates,
+      status: "pending",
+      location: {
+        type: 'Point',
+        coordinates: coordinates || [0, 0],
+      },
     });
     await order.save();
+    const orderId = order._id; 
+      // Create a notification for the provider
+      const notification = new Notification({
+        providerId,
+        message: `You have a new order (Order ID: ${orderId}). Please check your dashboard for details.`,
+        orderId,
+      });
+      await notification.save(); // Save the notification to the database
+      socketIO.emit("newOrder", {
+        providerId,
+        orderId,
+        message: `You have a new order (Order ID: ${orderId}).`,
+      });
+  
+      console.log('Notification sent to provider:', providerId);
+  
+      res.status(201).send(order);
+    } catch (error) {
+      res.status(400).send(error);
+    }
+});
+
+//Accept Order
+app.post("/orders/:orderId/accept", async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.body;
+    const order = await Order.findOne({ $or: [{ user: "orderId" }] });
+
     res.status(201).send(order);
   } catch (error) {
     res.status(400).send(error);
   }
 });
 
-// Accept Order
-app.post("/orders/:orderId/accept", async (req: Request, res: Response) => {
-  try {
-    const { orderId } = req.params;
-    const order = await Order.findOneAndUpdate(
-      { orderId },
-      { status: "accepted" },
-      { new: true }
-    );
-    if (!order) return res.status(404).send("Order not found");
-    res.status(200).send(order);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
 // Update Order Location
-app.put("/orders/:orderId/location", async (req: Request, res: Response) => {
-  try {
-    const { orderId } = req.params;
-    const { coordinates } = req.body;
-    const order = await Order.findOneAndUpdate(
-      { orderId },
-      { coordinates, status: "in-progress" },
-      { new: true }
-    );
-    if (!order) return res.status(404).send("Order not found");
+// app.put("/orders/:orderId/location", async (req: Request, res: Response) => {
+//   try {
+//     const { orderId } = req.params;
+//     const { coordinates } = req.body;
+//     const order = await Order.findOneAndUpdate(
+//       { orderId },
+//       { coordinates, status: "in-progress" },
+//       { new: true }
+//     );
+//     if (!order) return res.status(404).send("Order not found");
 
-    // Emit location update to all connected clients
-    socketIO.emit("locationUpdate", {
-      orderId,
-      coordinates,
-    });
+//     // Emit location update to all connected clients
+//     socketIO.emit("locationUpdate", {
+//       orderId,
+//       coordinates,
+//     });
 
-    res.status(200).send(order); // Respond with the updated order
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
+//     res.status(200).send(order); // Respond with the updated order
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// });
 
 // Start the server
 server.listen(PORT, () => {

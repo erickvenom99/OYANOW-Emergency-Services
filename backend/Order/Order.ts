@@ -4,7 +4,6 @@ import mongoose, { Document, Schema } from "mongoose";
 interface IOrder extends Document {
   user: mongoose.Schema.Types.ObjectId;
   provider: mongoose.Schema.Types.ObjectId;
-  orderId: string;
   status: "pending" | "accepted" | "in-progress" | "completed" | "canceled";
   coordinates: {
     type: "Point";
@@ -21,13 +20,12 @@ const OrderSchema: Schema = new Schema({
     ref: "Provider",
     required: true,
   },
-  orderId: { type: String, required: true, unique: true },
   status: {
     type: String,
     enum: ["pending", "accepted", "in-progress", "completed", "canceled"],
     default: "pending",
   },
-  coordinates: {
+  location: {
     type: { type: String, enum: ["Point"], required: true },
     coordinates: { type: [Number], required: true },
   },

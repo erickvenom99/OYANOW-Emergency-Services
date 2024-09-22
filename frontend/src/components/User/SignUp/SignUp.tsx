@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import email from "../../assets/email.png";
-import password from "../../assets/password.png";
-import person from "../../assets/person.png";
+import email from "../../../assets/email.png";
+import password from "../../../assets/password.png";
+import person from "../../../assets/person.png";
 import axios from "axios";
 import "./SignUp.css";
 
@@ -64,9 +64,10 @@ const SignUp = () => {
       } else if (action === "Login" && response.status === 200) {
         console.log("Logged in");
       }
+      console.log("Response from API:", response.data); // Log response
 
       const destinationPath = `/${uniqueUsername}/dashboard`;
-      navigate(destinationPath, { state: { username } });
+      navigate(destinationPath, { state: { username, coordinates, userId } });
     } catch (error) {
       console.error("Error:", error);
       setErrorMessage("An error occurred. Please try again.");

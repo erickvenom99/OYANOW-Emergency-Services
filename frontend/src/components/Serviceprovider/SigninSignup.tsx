@@ -59,9 +59,8 @@ const SigninSignup: React.FC = () => {
         }
       );
 
-      const { username, userId, orderId } = response.data;
+      const { username, providerId, orderId, uniqueUsername } = response.data;
 
-      const uniqueUsername = username + '-' + userId.slice(0, 4);
       if (action === "Sign Up") {
         if (response.status === 201) {
           setSuccessMessage("Account Created");
@@ -78,7 +77,7 @@ const SigninSignup: React.FC = () => {
         }
       }
       const destinationPath = `/service-providers/${uniqueUsername}/dashboard`;
-      navigate(destinationPath, { state: { orderId, coordinates, userId, username } });
+      navigate(destinationPath, { state: { orderId, coordinates, providerId, username } });
     } catch (error) {
       console.error("Error creating user:", error);
       setErrorMessage("An error occurred. Please try again");
