@@ -6,7 +6,14 @@ import SigninSignup from "./components/Serviceprovider/SigninSignup";
 import Footer from "./components/ReusableComponents/Footer/Footer";
 import Navbar from "./components/ReusableComponents/Navbar/Navbar";
 import Dashboard from "./components/Dashboard/Dashboard";
+<<<<<<< HEAD
+import UserDashboard from "./components/Dashboard/UserDashboard";
+import Automobile from "./components/Automobile/Automobile";
+import Electrical from "./components/Electrical/Electrical";
+import Plumbering from "./components/Plumbering/Plumbering";
+=======
 import UserDashboard from "./components/User/UserDashboard";
+>>>>>>> 65dbea0abecc0e3f521d0836ded4b6fbf3bd8533
 import JobListings from "./components/JobListings";
 import Notifications from "./components/Dashboard/Contents/Notifications";
 import LiveTracking from "../src/components/ReusableComponents/LiveTracking/LiveTracking"
@@ -21,6 +28,9 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<SignUp />} />
           <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/Automobile" element={<Automobile />} />
+          <Route path="/Plumbering" element={<Plumbering />} />
+          <Route path="/Electrical" element={<Electrical />} />
           <Route path="/service-providers/login" element={<SigninSignup />} />
           <Route path="/service-providers/sign-up" element={<SigninSignup />} />
           <Route path="/service-providers/:uniqueUsername/dashboard" element={<Dashboard />} >
