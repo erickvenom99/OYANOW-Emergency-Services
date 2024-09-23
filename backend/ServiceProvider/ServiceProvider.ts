@@ -6,7 +6,6 @@ interface ILocation {
 }
 
 export interface IServiceProvider extends Document {
-  _id: string;
   username: string;
   name: string;
   email: string;
@@ -19,7 +18,6 @@ export interface IServiceProvider extends Document {
 }
 
 const ServiceProviderSchema = new mongoose.Schema<IServiceProvider>({
-  _id: {type: String, required: true},
   username: { type: String, required: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },

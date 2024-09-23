@@ -1,19 +1,28 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ProvidersList from "./ProvidersList";
 import { fetchProviders } from "./api";
 import axios from "axios";
 
+interface Provider {
+    id: string;
+    name: string;
+    location: {
+        coordinates: [number, number]; // [longitude, latitude]
+    };
+}
+
 const UserDashboard = () => {
+    const navigate = useNavigate();
     const location = useLocation();
 
     // State Variables
     const [userId, setUserId] = useState<string>("");
     const [username, setUsername] = useState<string>("");
     const [uniqueUsername, setUniqueUsername] = useState<string>("");
-    const [coordinates, setCoordinates] = useState<[number, number]>([0, 0]);
+    const [userCoordinates, setUserCoordinates] = useState<[number, number]>([0, 0]);
     const [activeService, setActiveService] = useState<string | null>(null);
-    const [providers, setProviders] = useState<any[]>([]);
+    const [providers, setProviders] = useState<Provider[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -22,7 +31,7 @@ const UserDashboard = () => {
         if (location.state) {
             const { userId, coordinates, username, uniqueUsername } = location.state;
             setUserId(userId);
-            setCoordinates(coordinates);
+            setUserCoordinates(coordinates);
             setUsername(username);
             setUniqueUsername(uniqueUsername);
         }
@@ -33,14 +42,14 @@ const UserDashboard = () => {
         setActiveService((prev) => (prev === service ? null : service));
         setError(null);
 
-        if (!coordinates) {
+        if (!userCoordinates) {
             setError("Invalid coordinates provided.");
             return;
         }
 
         setLoading(true);
         try {
-            const providersData = await fetchProviders({ serviceType: service, coordinates });
+            const providersData = await fetchProviders({ serviceType: service, coordinates: userCoordinates });
             setProviders(providersData);
         } catch (err) {
             setError((err as Error).message || "Failed to fetch providers. Please try again later.");
@@ -58,13 +67,21 @@ const UserDashboard = () => {
                 providerId: providerId,
                 location: {
                     type: "Point",
-                    coordinates: coordinates,
+                    coordinates: userCoordinates,
                 },
             });
 
-            if (response.status !== 200) throw new Error("Failed to create order");
+            if (response.status !== 201) throw new Error("Failed to create order");
 
             console.log("Order created:", response.data);
+            const { orderId, coordinates } = response.data;
+            
+            // Find the selected provider from the providers list
+            const selectedProvider = providers.find(provider => provider.id === providerId);
+            console.log("selectedProvider: ", selectedProvider);
+            const providerCoordinates = selectedProvider?.location.coordinates; // Access the provider's coordinates
+
+            navigate(`/orders/${orderId}/map`, { state: { userCoordinates, orderId, providerCoordinates } });
         } catch (err) {
             setError((err as Error).message || "Failed to create order. Please try again.");
         } finally {
@@ -95,7 +112,7 @@ const UserDashboard = () => {
                             {activeService === service && (
                                 <ProvidersList 
                                     providers={providers} 
-                                    userCoordinates={coordinates} 
+                                    userCoordinates={userCoordinates} 
                                     uniqueUsername={uniqueUsername} 
                                     onSelectProvider={handleSelectProvider}
                                 />

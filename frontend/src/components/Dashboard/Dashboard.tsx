@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams, useLocation, Outlet } from "react-router-dom";
+import { Link, useParams, useLocation, Outlet } from "react-router-dom";
 import { BsArrowLeftShort } from "react-icons/bs";
 import { AiFillEnvironment } from "react-icons/ai";
 import { MdDashboard } from "react-icons/md";
@@ -11,26 +11,35 @@ interface Coordinates {
   lng: number;
 }
 
+interface LocationState {
+  orderId?: string;
+  coordinates?: { type: string; coordinates: number[] };
+  username: string;
+  providerId?: string;
+}
+
 const Dashboard = () => {
-  const uniqueUsername = useParams();
   const [open, setOpen] = useState(true);
-  const navigate = useNavigate();
   const location = useLocation();
-  const { orderId, coordinates, username, providerId } = location.state || {};
+  const { uniqueUsername } = useParams();
+  const { orderId, coordinates, username, providerId } = location.state as LocationState || {};
 
-  const defaultCoordinates: Coordinates = { lat: 0, lng: 0 };
-  let validCoordinates: Coordinates = defaultCoordinates;
+  console.log("coordinates ", coordinates);
 
-  if (coordinates && coordinates.type === "Point" && Array.isArray(coordinates.coordinates)) {
-    const coordArray = coordinates.coordinates;
+  let userCoordinates: Coordinates | null = null;
+
+  if (coordinates && Array.isArray(coordinates)) {
+    const coordArray = coordinates;
     if (coordArray.length === 2) {
-      validCoordinates = {
+      userCoordinates = {
         lat: coordArray[1], // latitude
         lng: coordArray[0], // longitude
       };
     }
   }
 
+  console.log("userCoordinates: ", userCoordinates);
+  
   return (
     <>
       <div className="flex">
@@ -49,7 +58,7 @@ const Dashboard = () => {
           {/* Navigation Links */}
           <ul className="pt-2 p-0">
             <li className="text-gray-300 text-sm flex items-center gap-x-4 cursor-pointer p-2 hover:bg-light-white rounded-md mt-2">
-              <Link to={`/${username}/dashboard`} className="flex items-center w-full text-gray-300 no-underline">
+              <Link to={`/service-providers/${uniqueUsername}/dashboard`} className="flex items-center w-full text-gray-300 no-underline">
                 <span className="text-2xl">
                   <MdDashboard />
                 </span>
@@ -59,7 +68,7 @@ const Dashboard = () => {
               </Link>
             </li>
             <li className="text-gray-300 text-sm flex items-center gap-x-4 cursor-pointer p-2 hover:bg-light-white rounded-md mt-2">
-              <Link to={`/${username}/dashboard/notifications`} className="flex items-center w-full text-gray-300 no-underline">
+              <Link to={`/service-providers/${uniqueUsername}/dashboard/notifications`} className="flex items-center w-full text-gray-300 no-underline">
                 <span className="text-2xl">
                   <MdDashboard />
                 </span>
@@ -133,15 +142,13 @@ const Dashboard = () => {
 
         <div className="p-7 flex-1">
           <h1 className="text-2xl font-semibold">Service Provider Dashboard</h1>
-          {orderId ? (
-            <LiveTracking orderId={orderId} initialCoordinates={validCoordinates} />
-          ) : coordinates ? (
-            <LiveTracking orderId="" initialCoordinates={validCoordinates} />
-          ) : (
-            <p>No order or coordinates information available.</p>
+          {userCoordinates ? (
+            <LiveTracking />
+          ) :  (
+            <p>No order information available.</p>
           )}
           {/* Render the child route content */}
-          <Outlet />
+          <Outlet context={{ uniqueUsername }}/>
         </div>
       </div>
     </>

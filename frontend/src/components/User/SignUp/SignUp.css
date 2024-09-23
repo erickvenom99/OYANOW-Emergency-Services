@@ -1,6 +1,78 @@
-form .container {
-  margin: 50px 0px;
+.signin-signup-background {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f4f4f4; /* Adjust background color if needed */
 }
-form label {
-  margin: 10px 20px;
+
+.signin-container {
+  margin-top: 200px;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 90%; /* Responsive width */
+  width: 600px; /* Max width for larger screens */
+}
+
+.inputs {
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+}
+
+
+.input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.input img {
+  margin-right: 10px;
+}
+
+.input input {
+  flex: 1; /* Allow input to take full width */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.submit {
+  padding: 10px;
+  text-align: center;
+  background-color: #007bff; /* Primary color */
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.submit.gray {
+  background-color: #ccc; /* Gray color for inactive button */
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.header .text {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.header .underline {
+  height: 2px;
+  width: 50px;
+  background-color: #007bff; /* Match with primary color */
+  margin: 0 auto;
+}
+
+.forgot-password {
+  text-align: center;
+  margin-top: 10px;
 }

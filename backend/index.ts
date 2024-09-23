@@ -27,7 +27,7 @@ const io = socketHandler(server); // Initialize Socket.IO
 let socketIO = io;
 
 mongoose
-  .connect("mongodb://localhost:27017/oyanow")
+  .connect("mongodb://127.0.0.1:27017/oyanow")
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Could not connect to MongoDB", err));
 
@@ -80,7 +80,7 @@ app.post("/service-providers/login", async (req: Request, res: Response) => {
       return res.status(400).send("Invalid password");
     }
     console.log("API Response:", provider.location.coordinates);
-    const uniqueUsername = provider.username + "-" + provider._id.slice(0, 4);
+    const uniqueUsername = provider.username + "-" + (provider._id as mongoose.Types.ObjectId).toString().toString().slice(0, 4);
     // If password is correct
     res.status(200).send({
       providerId: provider._id,
@@ -241,7 +241,9 @@ app.post("/orders/create-order", async (req: Request, res: Response) => {
   
       console.log('Notification sent to provider:', providerId);
   
-      res.status(201).send(order);
+      res.status(201).send({
+        orderId: order._id,
+        coordinates: order.coordinates?.coordinates,})
     } catch (error) {
       res.status(400).send(error);
     }

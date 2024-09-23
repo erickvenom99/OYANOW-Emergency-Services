@@ -16,6 +16,7 @@ const SignUp = () => {
   const [phoneNumberValue, setPhoneNumberValue] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
+  const [loading, setLoading] = useState(false); // Add loading state
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -35,10 +36,23 @@ const SignUp = () => {
   }, []);
 
   const handleSubmit = async () => {
+    console.log("Coordinates before navigation:", coordinates); // Log coordinates
+
+  if (!coordinates) {
+    setErrorMessage("Coordinates are not available. Please allow location access.");
+    return; // Prevent submission if coordinates are null
+  }
     if (action === "Sign Up" && passwordValue !== confirmPasswordValue) {
       setErrorMessage("Passwords do not match");
       return;
     }
+
+    if (!coordinates) {
+      setErrorMessage("Coordinates are not available. Please allow location access.");
+      return; // Prevent submission if coordinates are null
+    }
+
+    setLoading(true); // Set loading state
 
     try {
       const response = await axios.post(
@@ -52,25 +66,30 @@ const SignUp = () => {
           phoneNumber: phoneNumberValue,
           location: {
             type: "Point", // Required
-            coordinates: coordinates
+            coordinates: coordinates,
           },
         }
       );
 
       const { username, userId } = response.data;
-      const uniqueUsername = username + userId.slice(0, 4)
+      const uniqueUsername = username + userId.slice(0, 4);
+      
       if (action === "Sign Up" && response.status === 201) {
         console.log("Account Created Successfully", response.data);
       } else if (action === "Login" && response.status === 200) {
         console.log("Logged in");
       }
+
       console.log("Response from API:", response.data); // Log response
 
       const destinationPath = `/${uniqueUsername}/dashboard`;
       navigate(destinationPath, { state: { username, coordinates, userId } });
+
     } catch (error) {
       console.error("Error:", error);
       setErrorMessage("An error occurred. Please try again.");
+    } finally {
+      setLoading(false); // Reset loading state
     }
   };
 
@@ -123,16 +142,18 @@ const SignUp = () => {
               onChange={(e) => setEmailValue(e.target.value)}
             />
           </div>
-          <div className="input">
-            <img src={password} alt="" />
-            <input
-              type="password"
-              placeholder="Password"
-              value={passwordValue}
-              onChange={(e) => setPasswordValue(e.target.value)}
-            />
-            {action === "Sign Up" && (
+          <div className="inputs">
             <div className="input">
+              <img src={password} alt="" />
+              <input
+                type="password"
+                placeholder="Password"
+                value={passwordValue}
+                onChange={(e) => setPasswordValue(e.target.value)}
+              />
+            </div>
+            {action === "Sign Up" && (
+              <div className="input">
                 <img src={password} alt="" />
                 <input
                   type="password"
@@ -141,11 +162,11 @@ const SignUp = () => {
                   onChange={(e) => setConfirmPasswordValue(e.target.value)}
                 />
               </div>
-            )};
+            )}
           </div>
         </div>
         <div className="submit submit-button" onClick={handleSubmit}>
-          Submit
+          {loading ? "Submitting..." : "Submit"} {/* Show loading text */}
         </div>
         {action === "Login" && (
           <div className="forgot-password">

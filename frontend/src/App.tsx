@@ -9,6 +9,7 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import UserDashboard from "./components/User/UserDashboard";
 import JobListings from "./components/JobListings";
 import Notifications from "./components/Dashboard/Contents/Notifications";
+import LiveTracking from "../src/components/ReusableComponents/LiveTracking/LiveTracking"
 
 const App = () => {
   const DEFAULT_COORDINATES = { lat: 52.5309, lng: 13.3847 };
@@ -22,11 +23,12 @@ const App = () => {
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/service-providers/login" element={<SigninSignup />} />
           <Route path="/service-providers/sign-up" element={<SigninSignup />} />
-          <Route path="/service-providers/:username/dashboard" element={<Dashboard />} >
+          <Route path="/service-providers/:uniqueUsername/dashboard" element={<Dashboard />} >
             <Route path="notifications" element={<Notifications />} />
             {/* Add other child routes here */}
           </Route>
           <Route path="/:user/dashboard" element={<UserDashboard />} />{" "}
+          <Route path="/orders/:orderId/map" element={<LiveTracking />} />
           {/* Updated to avoid conflicts */}
         </Routes>
       </div>

@@ -35,7 +35,7 @@ const io = (0, socket_1.default)(server); // Initialize Socket.IO
 // Declare io globally for usage in routes
 let socketIO = io;
 mongoose_1.default
-    .connect("mongodb://localhost:27017/oyanow")
+    .connect("mongodb://127.0.0.1:27017/oyanow")
     .then(() => console.log("Connected to MongoDB"))
     .catch((err) => console.error("Could not connect to MongoDB", err));
 // Service Provider Sign-Up
@@ -81,7 +81,7 @@ app.post("/service-providers/login", (req, res) => __awaiter(void 0, void 0, voi
             return res.status(400).send("Invalid password");
         }
         console.log("API Response:", provider.location.coordinates);
-        const uniqueUsername = provider.username + "-" + provider._id.slice(0, 4);
+        const uniqueUsername = provider.username + "-" + provider._id.toString().toString().slice(0, 4);
         // If password is correct
         res.status(200).send({
             providerId: provider._id,
@@ -200,6 +200,7 @@ app.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 }));
 // Create Order
 app.post("/orders/create-order", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     console.log("Request Body:", req.body);
     try {
         const { userId, providerId, location } = req.body;
@@ -231,7 +232,10 @@ app.post("/orders/create-order", (req, res) => __awaiter(void 0, void 0, void 0,
             message: `You have a new order (Order ID: ${orderId}).`,
         });
         console.log('Notification sent to provider:', providerId);
-        res.status(201).send(order);
+        res.status(201).send({
+            orderId: order._id,
+            coordinates: (_a = order.coordinates) === null || _a === void 0 ? void 0 : _a.coordinates,
+        });
     }
     catch (error) {
         res.status(400).send(error);

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Provider from "./ServiceProvider/ServiceProvider"; // Adjust the path as necessary
 
-const uri = "mongodb://localhost:27017/oyanow"; // Your MongoDB URI
+const uri = "mongodb://127.0.0.1:27017/oyanow"; // Your MongoDB URI
 
 async function resetProviders() {
   try {

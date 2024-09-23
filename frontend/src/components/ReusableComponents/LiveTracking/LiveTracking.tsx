@@ -1,14 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import Map from "../../Map/Map";
-
-interface LiveTrackingProps {
-  orderId: string;
-  initialCoordinates: {
-    lat: number;
-    lng: number;
-  };
-}
+import { useLocation, useParams } from "react-router-dom";
 
 interface LocationUpdateData {
   orderId: string;
@@ -18,22 +11,44 @@ interface LocationUpdateData {
   };
 }
 
-const LiveTracking: React.FC<LiveTrackingProps> = ({ orderId, initialCoordinates }) => {
+const LiveTracking: React.FC = () => {
+  const location = useLocation();
+  const { orderId } = useParams();
+  
+  // Initial coordinates from location state or defaults
+  const userCoordinates =
+    location.state?.userCoordinates || location.state?.coordinates || { lat: 0, lng: 0 };
+  
+  const providerCoordinates =
+    location.state?.providerCoordinates || { lat: -1, lng: 35 };
+
   const socketRef = useRef<any>(null);
   const [coordinates, setCoordinates] = React.useState<{
-    lat: number;
-    lng: number;
-  }>(initialCoordinates);
+    user: { lat: number; lng: number };
+    provider: { lat: number; lng: number };
+  }>({
+    user: userCoordinates,
+    provider: providerCoordinates,
+  });
 
   useEffect(() => {
-    // Connect to the Webserver server
     socketRef.current = io("http://localhost:5000");
 
-    // Listen for location updates
     socketRef.current.on("locationUpdate", (data: LocationUpdateData) => {
       if (data.orderId === orderId) {
-        setCoordinates(data.coordinates);
+        setCoordinates((prev) => {
+          // Only update if provider coordinates have changed
+          if (prev.provider.lat !== data.coordinates.lat || prev.provider.lng !== data.coordinates.lng) {
+            return { ...prev, provider: data.coordinates };
+          }
+          return prev;
+        });
       }
+    });
+
+    // Handle socket connection errors
+    socketRef.current.on("connect_error", (err) => {
+      console.error("Socket connection error:", err);
     });
 
     return () => {
@@ -42,21 +57,14 @@ const LiveTracking: React.FC<LiveTrackingProps> = ({ orderId, initialCoordinates
   }, [orderId]);
 
   useEffect(() => {
-    // Request location access
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setCoordinates({ lat: latitude, lng: longitude });
-          // Optionally, start watching position for updates
-          navigator.geolocation.watchPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              setCoordinates({ lat: latitude, lng: longitude });
-            },
-            (error) => console.error("Error watching position:", error),
-            { enableHighAccuracy: true }
-          );
+          setCoordinates((prev) => ({
+            ...prev,
+            user: { lat: latitude, lng: longitude }
+          }));
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -67,12 +75,17 @@ const LiveTracking: React.FC<LiveTrackingProps> = ({ orderId, initialCoordinates
     }
   }, []);
 
+  // Log coordinates for debugging
+  console.log("User Coordinates:", coordinates.user);
+  console.log("Provider Coordinates:", coordinates.provider);
+
   return (
     <div>
-      <h2>Live Tracking</h2>
+      <h2>Live Tracking for Order: {orderId}</h2>
       <Map
-        apikey="8l_Oc_6LxfO8c8pPomyMBL-5Tap9jrt_ZFKH_os6gO4"
-        coordinates={coordinates}
+        apikey="YOUR_API_KEY" // Replace with your actual API key
+        userCoordinates={coordinates.user}
+        providerCoordinates={coordinates.provider}
       />
     </div>
   );
